@@ -3,36 +3,101 @@ import 'package:blog/features/screens/blog/blog_screen.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:blog/authentication.dart';
 
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   await Firebase.initializeApp();
+//   final authBloc = AuthenticationBloc();
+
+//   void initDynamicLinks() async {
+//     FirebaseDynamicLinks.instance.onLink;
+
+//     final data = await FirebaseDynamicLinks.instance.getInitialLink();
+//     final deepLink = data?.link;
+//     if (deepLink != null) {
+//       final queryParams = deepLink.queryParameters;
+//       if (queryParams.containsKey('blogId')) {
+//         final blogId = queryParams['blogId'];
+//         Navigator.pushNamed(context, '/blog-view', arguments: blogId);
+//       }
+//     }
+//   }
+
+//   initDynamicLinks();
+//   runApp(MyApp(authBloc: authBloc));
+// }
+
+// class MyApp extends StatefulWidget {
+//   final AuthenticationBloc authBloc;
+
+//   const MyApp({required this.authBloc});
+
+//   @override
+//   State<MyApp> createState() => _MyAppState();
+// }
+
+// class _MyAppState extends State<MyApp> {
+//   @override
+//   void initState() {
+//     super.initState();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       title: 'Blog App',
+//       theme: ThemeData(
+//         primarySwatch: Colors.blue,
+//         visualDensity: VisualDensity.adaptivePlatformDensity,
+//       ),
+//       initialRoute: '/',
+//       routes: {
+//         '/': (context) {
+//           if (widget.authBloc.isAuthenticated()) {
+//             return HomePage(authBloc: widget.authBloc);
+//           } else {
+//             return SignInPage(authBloc: widget.authBloc);
+//           }
+//         },
+//         '/add-blog': (context) {
+//           if (widget.authBloc.isAuthenticated()) {
+//             return AddBlogPage(authBloc: widget.authBloc);
+//           } else {
+//             return SignInPage(authBloc: widget.authBloc);
+//           }
+//         },
+//         '/login': (context) => SignInPage(authBloc: widget.authBloc),
+//         '/signup': (context) => SignUpPage(authBloc: widget.authBloc),
+//         '/blog-view': (context) {
+//           final args = ModalRoute.of(context)!.settings.arguments as String;
+//           if (widget.authBloc.isAuthenticated()) {
+//             return BlogView(authBloc: widget.authBloc, blogId: args);
+//           } else {
+//             return SignInPage(authBloc: widget.authBloc);
+//           }
+//         },
+//       },
+//     );
+//   }
+// }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   final authBloc = AuthenticationBloc();
-  runApp(MyApp(authBloc: authBloc));
-}
 
-class MyApp extends StatefulWidget {
-  final AuthenticationBloc authBloc;
-
-  const MyApp({required this.authBloc});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    super.initState();
-    initDynamicLinks();
-  }
-
-  void initDynamicLinks() async {
+  void initDynamicLinks(BuildContext context) async {
+    print("=====================================");
     FirebaseDynamicLinks.instance.onLink;
+    FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    print("=====================================");
+    print(analytics.appInstanceId);
 
     final data = await FirebaseDynamicLinks.instance.getInitialLink();
     final deepLink = data?.link;
@@ -43,6 +108,30 @@ class _MyAppState extends State<MyApp> {
         Navigator.pushNamed(context, '/blog-view', arguments: blogId);
       }
     }
+  }
+
+  runApp(MyApp(
+      authBloc: authBloc,
+      initDynamicLinks: initDynamicLinks)); // Pass the function as argument
+}
+
+class MyApp extends StatefulWidget {
+  final AuthenticationBloc authBloc;
+  final Function(BuildContext) initDynamicLinks; // Define the function here
+
+  const MyApp({required this.authBloc, required this.initDynamicLinks});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    print("===================B4==================");
+    widget.initDynamicLinks(context); // Call the function with context
+    print("====================A4=================");
   }
 
   @override

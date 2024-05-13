@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthenticationBloc {
@@ -22,10 +23,21 @@ class AuthenticationBloc {
     // }
   }
 
-  Future<void> signUpWithEmailAndPassword(String email, String password) async {
+  Future<void> signUpWithEmailAndPassword(
+      String email, String password, String name) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
+      final user = await _auth.createUserWithEmailAndPassword(
           email: email, password: password);
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+      await firestore.collection('users').add({
+        'username': name,
+        'email': email,
+        'created_at': DateTime.now(),
+        'updated_at': DateTime.now(),
+        'user_id': user.user?.uid,
+        // You can add more fields as needed
+      });
     } catch (e) {
       // Handle error
       print('Sign up error: $e');
@@ -43,6 +55,16 @@ class AuthenticationBloc {
 
   Future<String?> getCurrentUserId() async {
     return _auth.currentUser?.uid;
+  }
+
+  Future<Map<String, dynamic>> getUserDetails() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final user = await firestore
+        .collection('users')
+        .where('user_id', isEqualTo: _auth.currentUser?.uid)
+        .get();
+
+    return user.docs[0].data();
   }
 
   bool isAuthenticated() {

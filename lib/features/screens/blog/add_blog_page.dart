@@ -16,8 +16,10 @@ class AddBlogPage extends StatefulWidget {
 }
 
 class _AddBlogPageState extends State<AddBlogPage> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _contentController = TextEditingController();
+  final TextEditingController _titleController =
+      TextEditingController(text: 'hello world');
+  final TextEditingController _contentController =
+      TextEditingController(text: 'lorem ipsum dolor sit amet');
   File? _image;
 
   @override
@@ -86,15 +88,31 @@ class _AddBlogPageState extends State<AddBlogPage> {
       String imageUrl = await taskSnapshot.ref.getDownloadURL();
 
       // Add blog data to Firestore
-      FirebaseFirestore.instance.collection('blogs').add({
+      final blog = await FirebaseFirestore.instance.collection('blogs').add({
         'title': title,
         'content': content,
         'image_url': imageUrl,
-        'poster_id': await widget.authBloc
+        'user_id': await widget.authBloc
             .getCurrentUserId(), // Assuming you have a method to get the current user ID
         'created_at': DateTime.now(),
         'updated_at': DateTime.now(),
       });
+
+      final userQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('user_id', isEqualTo: await widget.authBloc.getCurrentUserId())
+          .get();
+
+      // Assuming user_id is unique, there should be only one document in the query snapshot
+      if (userQuery.docs.isNotEmpty) {
+        final userDoc = userQuery.docs.first;
+        // Update user document to add blogId
+        await userDoc.reference.update({
+          'blogs': FieldValue.arrayUnion([blog.id])
+        });
+      } else {
+        // Handle case when user document doesn't exist (optional)
+      }
 
       // Navigate back to previous screen
       Navigator.pop(context);

@@ -1,8 +1,10 @@
 import 'package:blog/authentication.dart';
+import 'package:blog/utils/date_time_formatter.dart';
 import 'package:blog/utils/firebase_dynamic_links.dart';
 import 'package:flutter/services.dart'; // Import flutter services for Share
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/widgets.dart';
 import 'package:share/share.dart';
 
 class BlogView extends StatelessWidget {
@@ -13,6 +15,9 @@ class BlogView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _commentController = TextEditingController(
+        text:
+            ' sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment sample comment');
     return Scaffold(
       appBar: AppBar(
         title: Text('Blog Details'),
@@ -23,6 +28,7 @@ class BlogView extends StatelessWidget {
               String link =
                   await FirebaseDynamicLinkService.createDynamicLink(blogId);
               await Share.share(link);
+              print(await authBloc.getUserDetails());
             },
             icon: const Icon(
               Icons.share,
@@ -47,7 +53,9 @@ class BlogView extends StatelessWidget {
             final title = blogData['title'];
             final content = blogData['content'];
             final image = blogData['image_url'];
-            // Access other fields as needed
+            final comments = blogData.data().toString().contains('comments')
+                ? blogData['comments']
+                : [];
             return SingleChildScrollView(
               padding: EdgeInsets.all(16.0),
               child: Column(
@@ -84,7 +92,86 @@ class BlogView extends StatelessWidget {
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  // Display more details if needed
+                  const Text('Comments', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 16),
+                  // Comment input
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Add a comment',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: () async {
+                          final user = await authBloc.getUserDetails();
+                          if (_commentController.text.isNotEmpty) {
+                            await FirebaseFirestore.instance
+                                .collection('blogs')
+                                .doc(blogId)
+                                .update({
+                              'comments': FieldValue.arrayUnion([
+                                {
+                                  'comment': _commentController.text,
+                                  'timestamp': DateTime.now(),
+                                  'username': user['username'],
+                                  'user_id': user['user_id']
+                                }
+                              ])
+                            });
+                            _commentController.clear();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Display comments
+                  Column(
+                    children: [
+                      for (var comment in comments)
+                        Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: Container(
+                            child: Row(
+                              children: [
+                                Column(
+                                  children: [
+                                    CircleAvatar(
+                                      child: Text(comment['username'][0]),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      comment['username'],
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
+                                    Text(comment['comment']),
+                                    Text(
+                                      dateTimeFormatter(comment['timestamp']),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
                 ],
               ),
             );
@@ -94,5 +181,24 @@ class BlogView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchComments(
+      List<dynamic> commentsRef) async {
+    try {
+      print("================");
+      List<Map<String, dynamic>> comments = [];
+      for (var commentRef in commentsRef) {
+        DocumentSnapshot commentSnapshot = await commentRef.get();
+        if (commentSnapshot.exists) {
+          Map<String, dynamic> commentData =
+              commentSnapshot.data() as Map<String, dynamic>;
+          comments.add(commentData);
+        }
+      }
+      return comments;
+    } catch (e) {
+      throw e;
+    }
   }
 }

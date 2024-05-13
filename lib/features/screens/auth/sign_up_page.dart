@@ -12,8 +12,12 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController =
+      TextEditingController(text: 'test@gmail.com');
+  final TextEditingController _passwordController =
+      TextEditingController(text: 'password');
+  final TextEditingController _nameController =
+      TextEditingController(text: 'Test User');
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +31,11 @@ class _SignUpPageState extends State<SignUpPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Name'),
+            ),
+            SizedBox(height: 16.0),
             TextFormField(
               controller: _emailController,
               decoration: InputDecoration(labelText: 'Email'),
@@ -66,8 +75,11 @@ class _SignUpPageState extends State<SignUpPage> {
   void _signUp() {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
+    final String name = _nameController.text.trim();
     if (email.isNotEmpty && password.isNotEmpty) {
-      widget.authBloc.signUpWithEmailAndPassword(email, password).then((_) {
+      widget.authBloc
+          .signUpWithEmailAndPassword(email, password, name)
+          .then((_) {
         // Navigate to home page if sign-up is successful
         Navigator.pushReplacementNamed(context,
             '/'); // Adjust the route name as per your app's navigation setup
