@@ -1,11 +1,8 @@
 import 'package:blog/authentication.dart';
+import 'package:blog/utils/comment_widget.dart';
 import 'package:blog/utils/firebase_dynamic_links.dart';
-import 'package:blog/utils/reply_comments.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart'; // Import flutter services for Share
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/widgets.dart';
 import 'package:share/share.dart';
 
 class BlogView extends StatefulWidget {
@@ -19,18 +16,22 @@ class BlogView extends StatefulWidget {
 }
 
 class _BlogViewState extends State<BlogView> {
+  final formKey = GlobalKey<FormState>();
+  final commentController = TextEditingController();
+  int commentLimit = 5; // Initial limit for comments to display
+  List<DocumentSnapshot> comments = []; // List to hold fetched comments
   @override
   Widget build(BuildContext context) {
     final commentController = TextEditingController(text: '');
     return Scaffold(
       appBar: AppBar(
-        title: Text('Blog Details'),
+        title: const Text('Blog Details'),
         actions: [
           IconButton(
             onPressed: () async {
-              // Share the blog
               String link = await FirebaseDynamicLinkService.createDynamicLink(
-                  widget.blogId);
+                widget.blogId,
+              );
               await Share.share(link);
             },
             icon: const Icon(
@@ -56,10 +57,6 @@ class _BlogViewState extends State<BlogView> {
             final title = blogData['title'];
             final content = blogData['content'];
             final image = blogData['image_url'];
-            final commentsRef = blogData.data().toString().contains('comments')
-                ? blogData['comments']
-                : [];
-            _fetchComments(commentsRef, widget.blogId);
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -95,92 +92,91 @@ class _BlogViewState extends State<BlogView> {
                     content,
                     style: const TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Comments', style: TextStyle(fontSize: 20)),
-                  const SizedBox(height: 16),
-                  // Comment input
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: commentController,
-                          maxLines: null,
-                          decoration: const InputDecoration(
-                            labelText: 'Add a comment',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: () async {
-                          final user = await widget.authBloc.getUserDetails();
-                          if (commentController.text.isNotEmpty) {
-                            await FirebaseFirestore.instance
-                                .collection('comments')
-                                .add({
-                              'user_id': user['user_id'],
-                              'blog_id': widget.blogId,
-                              'comment': commentController.text,
-                              'created_at': DateTime.now(),
-                              'updated_at': DateTime.now(),
-                              'username': user['username'],
-                              'reply_to': '',
-                            });
-                            commentController.clear();
-                            setState(() {
-                              _fetchComments(commentsRef, widget.blogId);
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
 
                   const SizedBox(height: 16),
+                  // Add a comment form
+                  Form(
+                    key: formKey,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: commentController,
+                            maxLines: null,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter a comment'
+                                : null,
+                            decoration: const InputDecoration(
+                              labelText: 'Add a comment',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.send),
+                          onPressed: () async {
+                            if (!formKey.currentState!.validate()) {
+                              return;
+                            }
+                            final user = await widget.authBloc.getUserDetails();
+                            if (commentController.text.isNotEmpty) {
+                              await FirebaseFirestore.instance
+                                  .collection('comments')
+                                  .add({
+                                'user_id': user['user_id'],
+                                'blog_id': widget.blogId,
+                                'comment': commentController.text,
+                                'created_at': DateTime.now(),
+                                'updated_at': DateTime.now(),
+                                'username': user['username'],
+                                'reply_to': '',
+                                'liked_by': []
+                              });
+                              commentController.clear();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                   // Display comments
-                  FutureBuilder(
-                    future: _fetchComments(commentsRef, widget.blogId),
+                  const Text('Comments', style: TextStyle(fontSize: 20)),
+                  const SizedBox(height: 16),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('comments')
+                        .where('blog_id', isEqualTo: widget.blogId)
+                        .orderBy('created_at', descending: true)
+                        .limit(commentLimit)
+                        .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
+                      } else if (snapshot.hasError) {
                         return Center(child: Text('Error: ${snapshot.error}'));
-                      }
-                      if (snapshot.hasData) {
-                        final comments =
-                            snapshot.data as List<Map<String, dynamic>>;
+                      } else if (!snapshot.hasData ||
+                          snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                            child: Text(
+                                'No comments yet. Be the first to comment!'));
+                      } else {
+                        comments = snapshot.data!.docs;
                         return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            for (var comment in comments)
-                              Card(
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Wrap(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          _buildAvatar(comment['username'][0]),
-                                          const SizedBox(width: 8),
-                                          Text(comment['username'])
-                                        ],
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: _buildComment(comment['comment'],
-                                            comment['updated_at']),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                            for (int i = 0; i < comments.length; i++)
+                              CommentWidget(comment: comments[i]),
+                            if (comments.length >= commentLimit)
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    commentLimit += 5;
+                                  });
+                                },
+                                child: const Text('Show more replies'),
                               ),
                           ],
                         );
-                      } else {
-                        return const Center(child: Text('No comments found.'));
                       }
                     },
                   ),
@@ -193,42 +189,5 @@ class _BlogViewState extends State<BlogView> {
         },
       ),
     );
-  }
-
-  Widget _buildAvatar(String firstLetter) {
-    return Column(
-      children: [
-        CircleAvatar(
-          child: Text(firstLetter),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildComment(
-    String comment,
-    Timestamp timestamp,
-    String? replyTo,
-    String? username,
-    String? blogId,
-  ) {
-    return CommentWidget(
-      comment: comment,
-      timestamp: timestamp,
-      blogId: blogId,
-    );
-  }
-}
-
-Future<List<Map<String, dynamic>>> _fetchComments(
-    List<dynamic> commentsRef, String blogId) async {
-  try {
-    final comment = await FirebaseFirestore.instance
-        .collection('comments')
-        .where('blog_id', isEqualTo: blogId)
-        .get();
-    return comment.docs.map((e) => e.data()).toList();
-  } catch (e) {
-    throw Exception('Error fetching comments: $e');
   }
 }
