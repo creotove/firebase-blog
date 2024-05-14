@@ -89,49 +89,4 @@ class _SignInPageState extends State<SignInPage> {
       );
     }
   }
-
-  // void _signIn() async {
-  //   final String email = _emailController.text.trim();
-  //   final String password = _passwordController.text.trim();
-  //   if (email.isNotEmpty && password.isNotEmpty) {
-  //     await widget.authBloc
-  //         .signInWithEmailAndPassword(email, password)
-  //         .then((res) {
-  //       Navigator.pushReplacementNamed(context, '/');
-  //     }).catchError((error) {
-  //       print("error : $error");
-  //       showDialog(
-  //         context: context,
-  //         builder: (context) => AlertDialog(
-  //           title: const Text('Sign In Error'),
-  //           content: const Text('Failed to sign in. Please try again.'),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () {
-  //                 Navigator.pop(context);
-  //               },
-  //               child: const Text('OK'),
-  //             ),
-  //           ],
-  //         ),
-  //       );
-  //     });
-  //   } else {
-  //     showDialog(
-  //       context: context,
-  //       builder: (context) => AlertDialog(
-  //         title: const Text('Sign In Error'),
-  //         content: const Text('Please enter your email and password.'),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.pop(context);
-  //             },
-  //             child: const Text('OK'),
-  //           ),
-  //         ],
-  //       ),
-  //     );
-  //   }
-  // }
 }

@@ -61,7 +61,7 @@ class _BlogViewState extends State<BlogView> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+                children: <Widget>[
                   Text(
                     title,
                     style: const TextStyle(

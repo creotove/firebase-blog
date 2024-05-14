@@ -57,6 +57,29 @@ class AuthenticationBloc {
     return _auth.currentUser?.uid;
   }
 
+  Future<bool> updateUserDetails(
+      {required String name,
+      required DateTime dob,
+      required String gender}) async {
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final user = await firestore
+          .collection('users')
+          .where('user_id', isEqualTo: _auth.currentUser?.uid)
+          .get();
+      await firestore.collection('users').doc(user.docs[0].id).update({
+        'username': name,
+        'dob': dob,
+        'gender': gender,
+        'updated_at': DateTime.now(),
+      });
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> getUserDetails() async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final user = await firestore

@@ -3,6 +3,9 @@ import 'package:blog/features/screens/blog/blog_screen.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
+import 'package:blog/features/screens/profile/edit_profile.dart';
+import 'package:blog/features/screens/profile/profile_page.dart';
+import 'package:blog/theme/theme.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
@@ -93,10 +96,8 @@ void main() async {
   final authBloc = AuthenticationBloc();
 
   void initDynamicLinks(BuildContext context) async {
-    print("=====================================");
     FirebaseDynamicLinks.instance.onLink;
     FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-    print("=====================================");
     print(analytics.appInstanceId);
 
     final data = await FirebaseDynamicLinks.instance.getInitialLink();
@@ -129,9 +130,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    print("===================B4==================");
-    widget.initDynamicLinks(context); // Call the function with context
-    print("====================A4=================");
+    widget.initDynamicLinks(context);
   }
 
   @override
@@ -139,10 +138,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Blog App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: AppTheme.darkThemeMode,
       initialRoute: '/',
       routes: {
         '/': (context) {
@@ -160,7 +156,10 @@ class _MyAppState extends State<MyApp> {
           }
         },
         '/login': (context) => SignInPage(authBloc: widget.authBloc),
+        '/edit-profile': (context) =>
+            EditProfilePage(authBloc: widget.authBloc),
         '/signup': (context) => SignUpPage(authBloc: widget.authBloc),
+        '/profile': (context) => ProfilePage(authBloc: widget.authBloc),
         '/blog-view': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
           if (widget.authBloc.isAuthenticated()) {

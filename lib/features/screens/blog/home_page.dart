@@ -1,4 +1,5 @@
 import 'package:blog/authentication.dart';
+import 'package:blog/theme/theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -9,18 +10,32 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void handleClick(String value) async {
+      switch (value) {
+        case 'Logout':
+          await authBloc.signOut();
+          Navigator.popAndPushNamed(context, '/login');
+          break;
+        case 'Profile':
+          Navigator.pushNamed(context, '/profile');
+          break;
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Blog'),
         actions: [
-          IconButton(
-            onPressed: () {
-              authBloc.signOut();
-              Navigator.popAndPushNamed(context, '/login');
+          PopupMenuButton<String>(
+            onSelected: handleClick,
+            itemBuilder: (BuildContext context) {
+              return {'Profile', 'Logout'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
             },
-            icon: const Icon(
-              Icons.logout,
-            ),
           ),
         ],
       ),
@@ -29,8 +44,12 @@ class HomePage extends StatelessWidget {
           Navigator.pushNamed(context, '/add-blog');
         },
         child: const Icon(Icons.add),
+        backgroundColor: Colors.redAccent,
       ),
-      body: _buildBlogList(),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _buildBlogList(),
+      ),
     );
   }
 
@@ -59,6 +78,7 @@ class HomePage extends StatelessWidget {
                   );
                 },
                 child: ListTile(
+                  tileColor: Colors.grey[800],
                   title: Text(blog['title']),
                   subtitle: Text(blog['content']),
                   // You can add more details like date, author, etc. here
