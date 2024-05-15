@@ -1,6 +1,6 @@
 import 'package:blog/authentication.dart';
-import 'package:blog/utils/comment_widget.dart';
-import 'package:blog/utils/firebase_dynamic_links.dart';
+import 'package:blog/utils/init_dynamic_links.dart';
+import 'package:blog/widgets/comment_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:share/share.dart';
@@ -29,7 +29,8 @@ class _BlogViewState extends State<BlogView> {
         actions: [
           IconButton(
             onPressed: () async {
-              String link = await FirebaseDynamicLinkService.createDynamicLink(
+              String link = await FirebaseDynamicLinksService.createDynamicLink(
+                false,
                 widget.blogId,
               );
               await Share.share(link);
@@ -129,8 +130,8 @@ class _BlogViewState extends State<BlogView> {
                                 'created_at': DateTime.now(),
                                 'updated_at': DateTime.now(),
                                 'username': user['username'],
-                                'reply_to': '',
-                                'liked_by': []
+                                'likes': [],
+                                'dislikes': [],
                               });
                               commentController.clear();
                             }

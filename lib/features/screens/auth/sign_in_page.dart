@@ -70,7 +70,6 @@ class _SignInPageState extends State<SignInPage> {
         _passwordController.text.trim(),
       );
       await Navigator.pushReplacementNamed(context, '/');
-      print('redirected to /');
     } catch (e) {
       showDialog(
         context: context,

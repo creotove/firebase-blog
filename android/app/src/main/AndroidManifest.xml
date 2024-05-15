@@ -30,7 +30,7 @@
                 <data
                     android:scheme="https"
                     android:host="cleanblog.page.link"
-                    android:pathPrefix="/blog"
+                    android:pathPrefix="/blog-view"
                 />
             </intent-filter>
         </activity>

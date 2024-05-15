@@ -1,6 +1,6 @@
 import 'package:blog/authentication.dart';
-import 'package:blog/utils/firebase_dynamic_links.dart';
 import 'package:blog/features/screens/blog/backups/reply_comments.dart';
+import 'package:blog/utils/init_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:share/share.dart';
@@ -26,8 +26,8 @@ class _BlogViewState extends State<BlogView> {
           IconButton(
             onPressed: () async {
               // Share the blog
-              String link = await FirebaseDynamicLinkService.createDynamicLink(
-                  widget.blogId);
+              String link = await FirebaseDynamicLinksService.createDynamicLink(
+                  false, widget.blogId);
               await Share.share(link);
             },
             icon: const Icon(

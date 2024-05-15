@@ -25,7 +25,7 @@ class BlogEditor extends StatelessWidget {
               labelText: labelText,
               hintText: hintText,
             )),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
       ],
     );
   }
