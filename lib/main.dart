@@ -1,3 +1,4 @@
+import 'package:blog/api/firebase_api.dart';
 import 'package:blog/features/screens/blog/add_blog_page.dart';
 import 'package:blog/features/screens/blog/blog_edit.dart';
 import 'package:blog/features/screens/blog/blog_view_page.dart';
@@ -21,6 +22,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   final authBloc = AuthenticationBloc();
+  await FirebaseApi().initNotifications();
   runApp(MyApp(authBloc: authBloc)); // Pass the function as argument
 }
 

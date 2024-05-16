@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final message = ModalRoute.of(context)?.settings.arguments;
     void handleClick(String value) async {
       switch (value) {
         case 'My Blogs':
