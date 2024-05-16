@@ -1,10 +1,15 @@
 import 'package:blog/features/screens/blog/add_blog_page.dart';
-import 'package:blog/features/screens/blog/blog_screen.dart';
+import 'package:blog/features/screens/blog/blog_edit.dart';
+import 'package:blog/features/screens/blog/blog_view_page.dart';
+import 'package:blog/features/screens/blog/comments/manage_comments.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
+import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/features/screens/profile/edit_profile.dart';
-import 'package:blog/features/screens/profile/profile_page.dart';
+import 'package:blog/features/screens/profile/my_blogs.dart';
+import 'package:blog/features/screens/profile/my_profile.dart';
+import 'package:blog/features/screens/profile/user_profile.dart';
 import 'package:blog/theme/theme.dart';
 import 'package:blog/utils/context_utility_service.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
@@ -36,7 +41,6 @@ class _MyAppState extends State<MyApp> {
         if (isBlog) {
           final queryParams = deepLink.queryParameters;
           if (queryParams.containsKey('blogId')) {
-            print("==========================================");
             final blogId = queryParams['blogId'];
             Navigator.pushNamed(ContextUtilityService.context!, '/blog-view',
                 arguments: blogId);
@@ -102,11 +106,44 @@ class _MyAppState extends State<MyApp> {
         '/edit-profile': (context) =>
             EditProfilePage(authBloc: widget.authBloc),
         '/signup': (context) => SignUpPage(authBloc: widget.authBloc),
-        '/profile': (context) => ProfilePage(authBloc: widget.authBloc),
+        '/my-profile': (context) => MyProfilePage(authBloc: widget.authBloc),
+        '/user-profile': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as String;
+          if (widget.authBloc.isAuthenticated()) {
+            return UserProfilePage(authBloc: widget.authBloc, userId: args);
+          } else {
+            return SignInPage(authBloc: widget.authBloc);
+          }
+        },
+        '/my-blogs': (context) => MyBlogsPage(authBloc: widget.authBloc),
         '/blog-view': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
           if (widget.authBloc.isAuthenticated()) {
             return BlogView(authBloc: widget.authBloc, blogId: args);
+          } else {
+            return SignInPage(authBloc: widget.authBloc);
+          }
+        },
+        '/chat': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as String;
+          if (widget.authBloc.isAuthenticated()) {
+            return ChatPage(authBloc: widget.authBloc, userId: args);
+          } else {
+            return SignInPage(authBloc: widget.authBloc);
+          }
+        },
+        '/blog-edit': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as String;
+          if (widget.authBloc.isAuthenticated()) {
+            return BlogEditPage(authBloc: widget.authBloc, blogId: args);
+          } else {
+            return SignInPage(authBloc: widget.authBloc);
+          }
+        },
+        '/manage-comments': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as String;
+          if (widget.authBloc.isAuthenticated()) {
+            return ManageCommentsPage(authBloc: widget.authBloc, blogId: args);
           } else {
             return SignInPage(authBloc: widget.authBloc);
           }

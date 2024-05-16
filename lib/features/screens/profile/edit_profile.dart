@@ -129,7 +129,7 @@ import 'package:flutter/material.dart';
 
 class EditProfilePage extends StatefulWidget {
   final AuthenticationBloc authBloc;
-  const EditProfilePage({Key? key, required this.authBloc}) : super(key: key);
+  const EditProfilePage({super.key, required this.authBloc});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();

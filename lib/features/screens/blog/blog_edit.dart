@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:io';
 
 import 'package:blog/authentication.dart';
@@ -7,27 +9,56 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 
-class AddBlogPage extends StatefulWidget {
+class BlogEditPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
+  final String blogId;
 
-  const AddBlogPage({super.key, required this.authBloc});
+  const BlogEditPage({
+    super.key,
+    required this.authBloc,
+    required this.blogId,
+  });
 
   @override
-  _AddBlogPageState createState() => _AddBlogPageState();
+  _BlogEditPageState createState() => _BlogEditPageState();
 }
 
-class _AddBlogPageState extends State<AddBlogPage> {
-  final TextEditingController _titleController =
-      TextEditingController(text: 'hello world');
-  final TextEditingController _contentController =
-      TextEditingController(text: 'lorem ipsum dolor sit amet');
+class _BlogEditPageState extends State<BlogEditPage> {
+  late TextEditingController _titleController;
+  late TextEditingController _contentController;
   File? _image;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _contentController = TextEditingController();
+    _fetchBlogDetails();
+  }
+
+  void _fetchBlogDetails() async {
+    try {
+      final blogSnapshot = await FirebaseFirestore.instance
+          .collection('blogs')
+          .doc(widget.blogId)
+          .get();
+
+      if (blogSnapshot.exists) {
+        setState(() {
+          _titleController.text = blogSnapshot['title'];
+          _contentController.text = blogSnapshot['content'];
+        });
+      }
+    } catch (e) {
+      print('Error fetching blog details: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Blog'),
+        title: const Text('Edit Blog'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -49,12 +80,12 @@ class _AddBlogPageState extends State<AddBlogPage> {
               _image == null
                   ? GradientButton(
                       buttonText: 'Pick Image', onPressed: _pickImage)
-                  : SizedBox(
-                      height: 150, // Set the height to fit under 150 pixels
+                  : Container(
+                      height: 150,
                       child: Image.file(_image!, fit: BoxFit.cover),
                     ),
               const SizedBox(height: 16.0),
-              GradientButton(buttonText: 'Add Blog', onPressed: _addBlog)
+              GradientButton(buttonText: 'Update Blog', onPressed: _updateBlog)
             ],
           ),
         ),
@@ -71,7 +102,7 @@ class _AddBlogPageState extends State<AddBlogPage> {
     }
   }
 
-  Future<void> _addBlog() async {
+  Future<void> _updateBlog() async {
     final String title = _titleController.text.trim();
     final String content = _contentController.text.trim();
     if (title.isNotEmpty && content.isNotEmpty && _image != null) {
@@ -83,32 +114,16 @@ class _AddBlogPageState extends State<AddBlogPage> {
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String imageUrl = await taskSnapshot.ref.getDownloadURL();
 
-      // Add blog data to Firestore
-      final blog = await FirebaseFirestore.instance.collection('blogs').add({
+      // Update blog data in Firestore
+      await FirebaseFirestore.instance
+          .collection('blogs')
+          .doc(widget.blogId)
+          .update({
         'title': title,
         'content': content,
         'image_url': imageUrl,
-        'user_id': await widget.authBloc.getCurrentUserId(),
-        'created_at': DateTime.now(),
         'updated_at': DateTime.now(),
-        'username': await widget.authBloc.getCurrentUserName(),
       });
-
-      final userQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .where('user_id', isEqualTo: await widget.authBloc.getCurrentUserId())
-          .get();
-
-      // Assuming user_id is unique, there should be only one document in the query snapshot
-      if (userQuery.docs.isNotEmpty) {
-        final userDoc = userQuery.docs.first;
-        // Update user document to add blogId
-        await userDoc.reference.update({
-          'blogs': FieldValue.arrayUnion([blog.id])
-        });
-      } else {
-        // Handle case when user document doesn't exist (optional)
-      }
 
       // Navigate back to previous screen
       Navigator.pop(context);

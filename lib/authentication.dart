@@ -1,10 +1,12 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthenticationBloc {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  StreamController<User?> _userController = StreamController<User?>();
+  final StreamController<User?> _userController = StreamController<User?>();
 
   Stream<User?> get user => _userController.stream;
 
@@ -55,6 +57,16 @@ class AuthenticationBloc {
 
   Future<String?> getCurrentUserId() async {
     return _auth.currentUser?.uid;
+  }
+
+  Future<String?> getCurrentUserName() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final user = await firestore
+        .collection('users')
+        .where('user_id', isEqualTo: _auth.currentUser?.uid)
+        .get();
+
+    return user.docs[0].data()['username'];
   }
 
   Future<bool> updateUserDetails(

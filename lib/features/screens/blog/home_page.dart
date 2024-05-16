@@ -1,13 +1,15 @@
+import 'dart:math';
+
 import 'package:blog/authentication.dart';
 import 'package:blog/utils/date_time_formatter.dart';
+import 'package:blog/utils/redirect_profile_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
   final AuthenticationBloc authBloc;
 
-  const HomePage({required this.authBloc});
+  const HomePage({super.key, required this.authBloc});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -23,12 +25,15 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     void handleClick(String value) async {
       switch (value) {
+        case 'My Blogs':
+          Navigator.pushNamed(context, '/my-blogs');
+          break;
         case 'Logout':
           await widget.authBloc.signOut();
           Navigator.popAndPushNamed(context, '/login');
           break;
         case 'Profile':
-          Navigator.pushNamed(context, '/profile');
+          Navigator.pushNamed(context, '/my-profile');
           break;
       }
     }
@@ -40,7 +45,7 @@ class _HomePageState extends State<HomePage> {
           PopupMenuButton<String>(
             onSelected: handleClick,
             itemBuilder: (BuildContext context) {
-              return {'Profile', 'Logout'}.map((String choice) {
+              return {'My Blogs', 'Profile', 'Logout'}.map((String choice) {
                 return PopupMenuItem<String>(
                   value: choice,
                   child: Text(choice),
@@ -111,9 +116,27 @@ class _HomePageState extends State<HomePage> {
                     trailing: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          'By: ${blog['user_id']}',
-                          style: const TextStyle(fontSize: 12),
+                        GestureDetector(
+                          onTap: () async {
+                            if (await redirectProfileService(blog['user_id'])) {
+                              Navigator.pushNamed(context, '/my-profile');
+                              return;
+                            } else {
+                              Navigator.pushNamed(context, '/user-profile',
+                                  arguments: blog['user_id']);
+                            }
+                          },
+                          child: RichText(
+                            text: TextSpan(text: 'by: ', children: [
+                              TextSpan(
+                                text: '@${blog['username']}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ]),
+                          ),
                         ),
                         Text(
                           dateTimeFormatter(blog['created_at']),

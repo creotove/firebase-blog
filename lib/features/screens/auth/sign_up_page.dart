@@ -1,11 +1,12 @@
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
+import 'package:blog/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 
 class SignUpPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
 
-  const SignUpPage({required this.authBloc});
+  const SignUpPage({super.key, required this.authBloc});
 
   @override
   _SignUpPageState createState() => _SignUpPageState();
@@ -23,35 +24,32 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign Up'),
+        title: const Text('Sign Up'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextFormField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
+              decoration: const InputDecoration(labelText: 'Name'),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             TextFormField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             TextFormField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _signUp,
-              child: Text('Sign Up'),
-            ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
+            GradientButton(buttonText: 'Sign Up', onPressed: _signUp),
+            const SizedBox(height: 16.0),
             GestureDetector(
               onTap: () {
                 Navigator.pushReplacement(
@@ -61,7 +59,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 );
               },
-              child: Text(
+              child: const Text(
                 'Already have an account? Sign in',
                 style: TextStyle(color: Colors.blue),
               ),
@@ -88,12 +86,12 @@ class _SignUpPageState extends State<SignUpPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Sign Up Error'),
+            title: const Text('Sign Up Error'),
             content: Text('$error'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('OK'),
+                child: const Text('OK'),
               ),
             ],
           ),
@@ -104,12 +102,12 @@ class _SignUpPageState extends State<SignUpPage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Sign Up Error'),
-          content: Text('Please enter your email and password.'),
+          title: const Text('Sign Up Error'),
+          content: const Text('Please enter your email and password.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         ),

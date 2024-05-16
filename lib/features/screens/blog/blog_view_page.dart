@@ -1,5 +1,6 @@
 import 'package:blog/authentication.dart';
 import 'package:blog/utils/init_dynamic_links.dart';
+import 'package:blog/utils/redirect_profile_service.dart';
 import 'package:blog/widgets/comment_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -58,6 +59,7 @@ class _BlogViewState extends State<BlogView> {
             final title = blogData['title'];
             final content = blogData['content'];
             final image = blogData['image_url'];
+            final username = blogData['username'];
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -93,7 +95,29 @@ class _BlogViewState extends State<BlogView> {
                     content,
                     style: const TextStyle(fontSize: 16),
                   ),
-
+                  Row(
+                    children: [
+                      const Text(
+                        "Posted by: ",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      GestureDetector(
+                        onTap: () async {
+                          if (await redirectProfileService(
+                              blogData['user_id'])) {
+                            Navigator.pushNamed(context, '/my-profile');
+                            return;
+                          } else {
+                            Navigator.pushNamed(context, '/user-profile',
+                                arguments: blogData['user_id']);
+                          }
+                        },
+                        child: Text(': @$username',
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.blue)),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   // Add a comment form
                   Form(

@@ -1,5 +1,6 @@
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
+import 'package:blog/widgets/gradient_button.dart';
 import 'package:flutter/material.dart';
 
 class SignInPage extends StatefulWidget {
@@ -19,30 +20,27 @@ class _SignInPageState extends State<SignInPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign In'),
+        title: const Text('Sign In'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextFormField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             TextFormField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _signIn,
-              child: Text('Sign In'),
-            ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
+            GradientButton(buttonText: 'Sign In', onPressed: _signIn),
+            const SizedBox(height: 16.0),
             GestureDetector(
               onTap: () {
                 Navigator.pushReplacement(
@@ -52,7 +50,7 @@ class _SignInPageState extends State<SignInPage> {
                   ),
                 );
               },
-              child: Text(
+              child: const Text(
                 'Don\'t have an account? Sign up',
                 style: TextStyle(color: Colors.blue),
               ),
