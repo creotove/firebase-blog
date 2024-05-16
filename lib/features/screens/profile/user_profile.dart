@@ -1,3 +1,4 @@
+import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/widgets/gradient_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
@@ -63,7 +64,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
             final user = snapshot.data!;
             final username = user['username'];
             final email = user['email'];
-            final avatar = user['avatar'];
+            final avatar = user.toString().contains('avatar')
+                ? user['avatar']
+                : 'https://www.w3schools.com/howto/img_avatar.png';
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,9 +101,19 @@ class _UserProfilePageState extends State<UserProfilePage> {
                             child: GradientButton(
                                 varient: 'small',
                                 buttonText: 'Message',
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/chat',
-                                      arguments: widget.userId);
+                                onPressed: () async {
+                                  final currentUser =
+                                      await widget.authBloc.getUserDetails();
+                                  final userId = currentUser['user_id'];
+
+                                  Navigator.push(context,
+                                      MaterialPageRoute(builder: (context) {
+                                    return ChatPage(
+                                      receiverUsedId: widget.userId,
+                                      currentUserId: userId,
+                                      authBloc: AuthenticationBloc(),
+                                    );
+                                  }));
                                 }),
                           ),
                         ],

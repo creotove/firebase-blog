@@ -1,30 +1,38 @@
+import 'package:blog/features/screens/chat/chat_service.dart';
+import 'package:blog/theme/app_pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
 
 class ChatPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
-  final String userId;
+  final String receiverUsedId;
+  final String? currentUserId;
 
-  const ChatPage({Key? key, required this.authBloc, required this.userId})
-      : super(key: key);
+  const ChatPage(
+      {super.key,
+      required this.authBloc,
+      required this.receiverUsedId,
+      this.currentUserId});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> {
-  late TextEditingController _messageController;
-  late Stream<QuerySnapshot> _messagesStream;
+  final TextEditingController _messageController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _messageController = TextEditingController();
-    _messagesStream = FirebaseFirestore.instance
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .snapshots();
+  final ChatService _chatService = ChatService();
+
+  void sendMessage() async {
+    if (_messageController.text.trim().isNotEmpty) {
+      await _chatService.sendMessage(
+        _messageController.text.trim(),
+        widget.currentUserId!,
+        widget.receiverUsedId,
+      );
+      _messageController.clear();
+    }
   }
 
   @override
@@ -36,51 +44,7 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _messagesStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else {
-                  final messages = snapshot.data!.docs;
-                  return ListView.builder(
-                    reverse: true,
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[index].data() as Map<String,
-                          dynamic>?; // Cast message to Map<String, dynamic> or nullable
-
-                      if (message != null) {
-                        final isMe = message['sender'] == widget.userId;
-
-                        return Align(
-                          alignment: isMe
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 10),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isMe ? Colors.blue : Colors.grey,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              message['text'] ?? '', // Add a null check here
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        );
-                      } else {
-                        return const SizedBox(); // Return an empty SizedBox if message is null
-                      }
-                    },
-                  );
-                }
-              },
-            ),
+            child: _buildMessagesList(),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -99,7 +63,7 @@ class _ChatPageState extends State<ChatPage> {
                 IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () {
-                    _sendMessage();
+                    sendMessage();
                   },
                 ),
               ],
@@ -110,15 +74,55 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  void _sendMessage() {
-    String messageText = _messageController.text.trim();
-    if (messageText.isNotEmpty) {
-      FirebaseFirestore.instance.collection('messages').add({
-        'text': messageText,
-        'sender': widget.userId,
-        'timestamp': Timestamp.now(),
-      });
-      _messageController.clear();
-    }
+  //Create Message list
+  Widget _buildMessagesList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _chatService.getMessages(
+          widget.currentUserId!, widget.receiverUsedId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No messages'));
+        } else {
+          final messages = snapshot.data!.docs;
+          return ListView.builder(
+            reverse: true,
+            itemCount: messages.length,
+            itemBuilder: (context, index) {
+              return _buildMessageItem(messages[index]);
+            },
+          );
+        }
+      },
+    );
+  }
+
+  // Create message item
+  Widget _buildMessageItem(DocumentSnapshot docuemnt) {
+    Map<String, dynamic> message = docuemnt.data() as Map<String, dynamic>;
+    final isMe = message['senderId'] == widget.currentUserId;
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isMe ? Colors.blue : Colors.grey,
+          borderRadius: BorderRadius.circular(10),
+          gradient: isMe
+              ? const LinearGradient(
+                  colors: [AppPallete.gradient1, AppPallete.gradient2],
+                )
+              : null,
+        ),
+        child: Text(
+          message['message'] ?? '',
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+    );
   }
 }
