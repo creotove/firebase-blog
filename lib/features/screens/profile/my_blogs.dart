@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:blog/theme/app_pallete.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/authentication.dart';
@@ -57,6 +58,24 @@ class _MyBlogsPageState extends State<MyBlogsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Blogs'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                  colors: [AppPallete.gradient1, AppPallete.gradient2])),
+          child: const Icon(
+            Icons.add,
+            size: 40,
+          ),
+        ),
+        onPressed: () {
+          Navigator.pushNamed(context, '/add-blog');
+        },
       ),
       body: FutureBuilder(
         future: _myBlogs,

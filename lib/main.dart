@@ -7,6 +7,7 @@ import 'package:blog/features/screens/blog/home_page.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
 import 'package:blog/features/screens/chat/chat.dart';
+import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/profile/edit_profile.dart';
 import 'package:blog/features/screens/profile/my_blogs.dart';
 import 'package:blog/features/screens/profile/my_profile.dart';
@@ -20,10 +21,15 @@ import 'package:blog/authentication.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  final authBloc = AuthenticationBloc();
-  await FirebaseApi().initNotifications();
-  runApp(MyApp(authBloc: authBloc)); // Pass the function as argument
+  try {
+    await Firebase.initializeApp();
+    final authBloc = AuthenticationBloc();
+    await FirebaseApi().initNotifications();
+    runApp(MyApp(authBloc: authBloc)); // Pass the function as argument
+  } catch (e) {
+    print('=========================');
+    print(e);
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -105,6 +111,7 @@ class _MyAppState extends State<MyApp> {
           }
         },
         '/login': (context) => SignInPage(authBloc: widget.authBloc),
+        '/chats': (context) => ChatsPage(authBloc: widget.authBloc),
         '/edit-profile': (context) =>
             EditProfilePage(authBloc: widget.authBloc),
         '/signup': (context) => SignUpPage(authBloc: widget.authBloc),
