@@ -130,11 +130,17 @@ class FirebaseApi {
       return;
     }
     try {
-      await FirebaseFirestore.instance
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      await firestore
           .collection('users')
-          .doc(userDetails['user_id'])
-          .update({
-        'FCM_token': token,
+          .where('user_id', isEqualTo: userDetails['uid'])
+          .get()
+          .then((value) async {
+        if (value.docs.isNotEmpty) {
+          await firestore.collection('users').doc(value.docs.first.id).update({
+            'fcmToken': token,
+          });
+        }
       });
     } catch (e) {
       print(e);

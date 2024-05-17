@@ -1,3 +1,4 @@
+import 'package:blog/api/firebase_api.dart';
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/profile/my_blogs.dart';
@@ -27,25 +28,14 @@ class _HomePageState extends State<HomePage> {
     MyProfilePage(authBloc: AuthenticationBloc()),
   ];
 
-  void handleClick(String value) async {
-    switch (value) {
-      case 'My Blogs':
-        _onItemTapped(1);
-        break;
-      case 'Logout':
-        await widget.authBloc.signOut();
-        Navigator.popAndPushNamed(context, '/login');
-        break;
-      case 'Profile':
-        _onItemTapped(3);
-        break;
-    }
-  }
-
-  void _onItemTapped(int index) {
+  void _onItemTapped(int index) async {
+    if (_selectedIndex == index) return;
     setState(() {
       _selectedIndex = index;
     });
+    if (index == 2) {
+      await FirebaseApi().initNotifications();
+    }
   }
 
   @override

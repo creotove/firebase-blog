@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:blog/features/screens/profile/edit_profile.dart';
+import 'package:blog/theme/app_pallete.dart';
 import 'package:blog/utils/pick_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/authentication.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/widgets.dart';
 
 class MyProfilePage extends StatefulWidget {
   final AuthenticationBloc authBloc;
@@ -68,6 +70,22 @@ class _MyProfilePageState extends State<MyProfilePage> {
               _buildProfileDetail('Username', username),
               _buildProfileDetail('Email', email),
               _buildProfileDetail('Gender', gender),
+              GestureDetector(
+                onTap: () async {
+                  await AuthenticationBloc().signOut();
+                },
+                child: const Card(
+                  color: Colors.red,
+                  margin: EdgeInsets.symmetric(vertical: 10),
+                  child: ListTile(
+                    title: Text(
+                      "Logout",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: Icon(Icons.logout, color: Colors.white),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

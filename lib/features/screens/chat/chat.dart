@@ -6,14 +6,14 @@ import 'package:blog/authentication.dart';
 
 class ChatPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
-  final String receiverUsedId;
+  final String receiverUserId;
   final String? currentUserId;
 
   const ChatPage(
       {super.key,
       required this.authBloc,
-      required this.receiverUsedId,
-      this.currentUserId});
+      required this.receiverUserId,
+      this.currentUserId = ''});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -29,7 +29,7 @@ class _ChatPageState extends State<ChatPage> {
       await _chatService.sendMessage(
         _messageController.text.trim(),
         widget.currentUserId!,
-        widget.receiverUsedId,
+        widget.receiverUserId,
       );
       _messageController.clear();
     }
@@ -78,7 +78,7 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessagesList() {
     return StreamBuilder<QuerySnapshot>(
       stream: _chatService.getMessages(
-          widget.currentUserId!, widget.receiverUsedId),
+          widget.currentUserId!, widget.receiverUserId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

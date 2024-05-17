@@ -102,6 +102,16 @@ class AuthenticationBloc {
     return user.docs[0].data();
   }
 
+  Future<Map<String, dynamic>> getUserDetailsById(String userId) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final user = await firestore
+        .collection('users')
+        .where('user_id', isEqualTo: userId)
+        .get();
+
+    return user.docs[0].data();
+  }
+
   bool isAuthenticated() {
     return _auth.currentUser != null;
   }

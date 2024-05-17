@@ -24,8 +24,7 @@ void main() async {
   try {
     await Firebase.initializeApp();
     final authBloc = AuthenticationBloc();
-    await FirebaseApi().initNotifications();
-    runApp(MyApp(authBloc: authBloc)); // Pass the function as argument
+    runApp(MyApp(authBloc: authBloc));
   } catch (e) {
     print('=========================');
     print(e);
@@ -136,7 +135,7 @@ class _MyAppState extends State<MyApp> {
         '/chat': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
           if (widget.authBloc.isAuthenticated()) {
-            return ChatPage(authBloc: widget.authBloc, receiverUsedId: args);
+            return ChatPage(authBloc: widget.authBloc, receiverUserId: args);
           } else {
             return SignInPage(authBloc: widget.authBloc);
           }

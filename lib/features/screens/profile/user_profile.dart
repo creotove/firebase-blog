@@ -109,7 +109,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                   Navigator.push(context,
                                       MaterialPageRoute(builder: (context) {
                                     return ChatPage(
-                                      receiverUsedId: widget.userId,
+                                      receiverUserId: widget.userId,
                                       currentUserId: userId,
                                       authBloc: AuthenticationBloc(),
                                     );
