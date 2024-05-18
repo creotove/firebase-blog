@@ -10,7 +10,11 @@ class BlogView extends StatefulWidget {
   final AuthenticationBloc authBloc;
   final String blogId;
 
-  const BlogView({required this.blogId, required this.authBloc});
+  const BlogView({
+    super.key,
+    required this.blogId,
+    required this.authBloc,
+  });
 
   @override
   State<BlogView> createState() => _BlogViewState();

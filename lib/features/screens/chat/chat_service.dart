@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:blog/authentication.dart';
 import 'package:blog/features/models/message.dart';
+import 'package:blog/secrets/fcm_server_key.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -67,25 +71,27 @@ class ChatService {
           .where('user_id', isEqualTo: receiverId)
           .get()
           .then((value) => value.docs.first);
-      print(userDoc.data());
       final userdata = userDoc.data();
-      String token = (userdata as Map<String, dynamic>)['fcmToken'];
-      print(token);
-
-      if (token != null && token.isNotEmpty) {
-        await FirebaseMessaging.instance.sendMessage(
-          to: token,
-          data: {
-            'type': 'chat',
-            'message': message,
-          },
-        );
-        print('Notification sent to $receiverId');
-        print('==================Yes=====================');
+      String receiverToken = (userdata as Map<String, dynamic>)['fcmToken'];
+      final senderDetails = await AuthenticationBloc().getUserDetails();
+      final senderName = senderDetails['username'];
+      if (receiverToken.isNotEmpty) {
+        await http.post(Uri.parse('https://fcm.googleapis.com/fcm/send'),
+            headers: {
+              HttpHeaders.contentTypeHeader: 'application/json',
+              HttpHeaders.authorizationHeader: FcmSecrets.serverKey,
+            },
+            body: jsonEncode({
+              'to': receiverToken,
+              'notification': {
+                'title': "Message from $senderName",
+                'body': message,
+              },
+            }));
       }
     } catch (e) {
-      print('==================No=====================');
       print(e);
+      throw e;
     }
   }
 

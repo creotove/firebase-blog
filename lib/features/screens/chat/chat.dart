@@ -26,12 +26,13 @@ class _ChatPageState extends State<ChatPage> {
 
   void sendMessage() async {
     if (_messageController.text.trim().isNotEmpty) {
+      final chatMessage = _messageController.text.trim();
+      _messageController.clear();
       await _chatService.sendMessage(
-        _messageController.text.trim(),
+        chatMessage,
         widget.currentUserId!,
         widget.receiverUserId,
       );
-      _messageController.clear();
     }
   }
 
