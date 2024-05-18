@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, use_rethrow_when_possible
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -93,13 +93,18 @@ class AuthenticationBloc {
   }
 
   Future<Map<String, dynamic>> getUserDetails() async {
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final user = await firestore
-        .collection('users')
-        .where('user_id', isEqualTo: _auth.currentUser?.uid)
-        .get();
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final user = await firestore
+          .collection('users')
+          .where('user_id', isEqualTo: _auth.currentUser?.uid)
+          .get();
 
-    return user.docs[0].data();
+      return user.docs[0].data();
+    } catch (e) {
+      print(e);
+      throw e;
+    }
   }
 
   Future<Map<String, dynamic>> getUserDetailsById(String userId) async {

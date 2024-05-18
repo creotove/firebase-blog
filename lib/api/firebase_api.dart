@@ -62,7 +62,7 @@ class FirebaseApi {
   void handleMessage(RemoteMessage message) {
     if (message.notification == null) return;
     ContextUtilityService.navigatorKey.currentState
-        ?.pushNamed('/', arguments: message);
+        ?.pushNamed('/profile', arguments: message);
   }
 
   Future<void> initLocalPushNotifications() async {

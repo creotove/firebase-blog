@@ -2,7 +2,9 @@
 
 import 'package:blog/features/screens/chat/chat_service.dart';
 import 'package:blog/theme/app_pallete.dart';
+import 'package:blog/utils/encryption_helper.dart';
 import 'package:blog/widgets/text_filed.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
@@ -111,6 +113,8 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessageItem(DocumentSnapshot docuemnt) {
     Map<String, dynamic> message = docuemnt.data() as Map<String, dynamic>;
     final isMe = message['senderId'] == widget.currentUserId;
+    final decryptedMessage =
+        EncryptionHelper.decryptMessage(message['message']);
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -126,7 +130,7 @@ class _ChatPageState extends State<ChatPage> {
               : null,
         ),
         child: Text(
-          message['message'] ?? '',
+          decryptedMessage,
           style: const TextStyle(color: Colors.white),
         ),
       ),

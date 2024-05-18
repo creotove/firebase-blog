@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:blog/authentication.dart';
 import 'package:blog/features/models/message.dart';
 import 'package:blog/secrets/fcm_server_key.dart';
+import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
@@ -18,8 +19,9 @@ class ChatService {
     String receiverId,
   ) async {
     try {
+      final encrptedMessage = EncryptionHelper.encryptMessage(message);
       Message newMessage = Message(
-        message: message,
+        message: encrptedMessage,
         senderId: senderId,
         receiverId: receiverId,
         timestamp: Timestamp.now(),
