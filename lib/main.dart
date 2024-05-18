@@ -13,6 +13,7 @@ import 'package:blog/features/screens/profile/edit_profile.dart';
 import 'package:blog/features/screens/profile/my_blogs.dart';
 import 'package:blog/features/screens/profile/my_profile.dart';
 import 'package:blog/features/screens/profile/user_profile.dart';
+import 'package:blog/secrets/firebase_options.dart';
 import 'package:blog/theme/theme.dart';
 import 'package:blog/utils/context_utility_service.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
@@ -23,7 +24,8 @@ import 'package:blog/authentication.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
     final authBloc = AuthenticationBloc();
     runApp(MyApp(authBloc: authBloc));
   } catch (e) {
