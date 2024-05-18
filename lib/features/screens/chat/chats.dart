@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/features/screens/chat/chat_service.dart';

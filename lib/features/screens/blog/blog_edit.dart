@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, library_private_types_in_public_api, use_build_context_synchronously
 
 import 'dart:io';
 
@@ -80,7 +80,7 @@ class _BlogEditPageState extends State<BlogEditPage> {
               _image == null
                   ? GradientButton(
                       buttonText: 'Pick Image', onPressed: _pickImage)
-                  : Container(
+                  : SizedBox(
                       height: 150,
                       child: Image.file(_image!, fit: BoxFit.cover),
                     ),

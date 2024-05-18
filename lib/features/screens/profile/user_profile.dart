@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/widgets/gradient_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +11,7 @@ class UserProfilePage extends StatefulWidget {
   final String userId;
 
   const UserProfilePage({
+    super.key,
     required this.authBloc,
     required this.userId,
   });

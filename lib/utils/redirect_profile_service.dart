@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, use_rethrow_when_possible
+
 import 'package:blog/authentication.dart';
 
 Future<bool> redirectProfileService(String blogOwnerId) async {

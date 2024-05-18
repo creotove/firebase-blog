@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'package:blog/authentication.dart';
 import 'package:blog/utils/context_utility_service.dart';

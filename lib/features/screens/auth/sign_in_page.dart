@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
 import 'package:blog/widgets/gradient_button.dart';
@@ -6,7 +8,7 @@ import 'package:flutter/material.dart';
 class SignInPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
 
-  const SignInPage({required this.authBloc});
+  const SignInPage({super.key, required this.authBloc});
 
   @override
   _SignInPageState createState() => _SignInPageState();

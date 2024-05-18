@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:blog/authentication.dart';
 import 'package:blog/utils/init_dynamic_links.dart';
 import 'package:blog/utils/redirect_profile_service.dart';

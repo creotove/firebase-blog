@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:blog/api/firebase_api.dart';
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/chat/chats.dart';
@@ -22,7 +24,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    BlogListPage(),
+    const BlogListPage(),
     MyBlogsPage(authBloc: AuthenticationBloc()),
     ChatsPage(authBloc: AuthenticationBloc()),
     MyProfilePage(authBloc: AuthenticationBloc()),
@@ -74,6 +76,8 @@ class _HomePageState extends State<HomePage> {
 }
 
 class BlogListPage extends StatelessWidget {
+  const BlogListPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,6 +176,6 @@ class BlogListPage extends StatelessWidget {
   }
 
   String _truncateContent(String content) {
-    return content.length > 50 ? content.substring(0, 50) + '...' : content;
+    return content.length > 50 ? '${content.substring(0, 50)}...' : content;
   }
 }

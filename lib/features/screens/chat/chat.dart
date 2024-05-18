@@ -1,5 +1,8 @@
+// ignore_for_file: use_rethrow_when_possible, avoid_print
+
 import 'package:blog/features/screens/chat/chat_service.dart';
 import 'package:blog/theme/app_pallete.dart';
+import 'package:blog/widgets/text_filed.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
@@ -25,14 +28,19 @@ class _ChatPageState extends State<ChatPage> {
   final ChatService _chatService = ChatService();
 
   void sendMessage() async {
-    if (_messageController.text.trim().isNotEmpty) {
-      final chatMessage = _messageController.text.trim();
-      _messageController.clear();
-      await _chatService.sendMessage(
-        chatMessage,
-        widget.currentUserId!,
-        widget.receiverUserId,
-      );
+    try {
+      if (_messageController.text.trim().isNotEmpty) {
+        final chatMessage = _messageController.text.trim();
+        _messageController.clear();
+        await _chatService.sendMessage(
+          chatMessage,
+          widget.currentUserId!,
+          widget.receiverUserId,
+        );
+      }
+    } catch (e) {
+      print(e);
+      throw e;
     }
   }
 
@@ -52,12 +60,10 @@ class _ChatPageState extends State<ChatPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: BlogEditor(
                     controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Type a message...',
-                      border: OutlineInputBorder(),
-                    ),
+                    hintText: 'Type a message...',
+                    labelText: 'Message',
                   ),
                 ),
                 const SizedBox(width: 8.0),

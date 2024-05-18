@@ -16,15 +16,18 @@ class BlogEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextFormField(
-            maxLines: null,
-            controller: controller,
-            validator: (value) =>
-                value!.isEmpty ? 'Please enter $hintText' : null,
-            decoration: InputDecoration(
-              labelText: labelText,
-              hintText: hintText,
-            )),
+        SizedBox(
+          height: 60,
+          child: TextFormField(
+              maxLines: null,
+              controller: controller,
+              validator: (value) =>
+                  value!.isEmpty ? 'Please enter $hintText' : null,
+              decoration: InputDecoration(
+                labelText: labelText,
+                hintText: hintText,
+              )),
+        ),
         const SizedBox(height: 10),
       ],
     );

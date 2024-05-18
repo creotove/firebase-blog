@@ -1,4 +1,5 @@
-import 'package:blog/api/firebase_api.dart';
+// ignore_for_file: avoid_print
+
 import 'package:blog/features/screens/blog/add_blog_page.dart';
 import 'package:blog/features/screens/blog/blog_edit.dart';
 import 'package:blog/features/screens/blog/blog_view_page.dart';
@@ -34,7 +35,7 @@ void main() async {
 class MyApp extends StatefulWidget {
   final AuthenticationBloc authBloc;
 
-  const MyApp({required this.authBloc});
+  const MyApp({super.key, required this.authBloc});
   @override
   State<MyApp> createState() => _MyAppState();
 }

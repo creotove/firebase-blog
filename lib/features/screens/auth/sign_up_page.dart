@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/widgets/gradient_button.dart';
