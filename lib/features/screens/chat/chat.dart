@@ -1,5 +1,6 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print, use_rethrow_when_possible
+
 import 'dart:io';
-import 'package:blog/features/models/message.dart';
 import 'package:blog/features/screens/chat/chat_service.dart';
 import 'package:blog/features/screens/chat/message_sender_helper.dart';
 import 'package:blog/features/screens/chat/argument_helper.dart.dart';
@@ -33,6 +34,8 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ChatService _chatService = ChatService();
+  final Set _selectedMessages = {};
+  bool _selectionMode = false;
 
   void sendMessage() async {
     try {
@@ -44,13 +47,72 @@ class _ChatPageState extends State<ChatPage> {
           chatMessage,
           widget.currentUserId!,
           widget.receiverUserId,
-          MessageType.text,
         );
       }
     } catch (e) {
       print(e);
       throw e;
     }
+  }
+
+  Future<void> deleteSelectedMessages() async {
+    final List users = [widget.currentUserId, widget.receiverUserId];
+    users.sort();
+    final chatRoomRef = FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(users[0] + '_' + users[1])
+        .collection('messages');
+
+    for (String messageId in _selectedMessages) {
+      await chatRoomRef.doc(messageId).delete();
+    }
+
+    setState(() {
+      _selectedMessages.clear();
+    });
+  }
+
+  void _onMessageLongPress(String messageId) {
+    setState(() {
+      _selectionMode = true;
+      if (_selectedMessages.contains(messageId)) {
+        if (_selectedMessages.length == 1) {
+          _selectionMode = false;
+          _selectedMessages.clear();
+          return;
+        }
+        _selectedMessages.remove(messageId);
+      } else {
+        _selectedMessages.add(messageId);
+      }
+    });
+  }
+
+  Future<void> toggleLike(String messageId) async {
+    final currentUserId = widget.currentUserId!;
+    final List users = [widget.currentUserId, widget.receiverUserId];
+    users.sort();
+    final messageRef = FirebaseFirestore.instance
+        .collection('chatRooms')
+        .doc(users[0] + '_' + users[1])
+        .collection('messages')
+        .doc(messageId);
+    final messageDoc = await messageRef.get();
+    if (messageDoc.exists) {
+      List<dynamic> likedBy = messageDoc['likedBy'] ?? [];
+      if (likedBy.contains(currentUserId)) {
+        likedBy.remove(currentUserId);
+      } else {
+        likedBy.add(currentUserId);
+      }
+      await messageRef.update({'likedBy': likedBy});
+    }
+  }
+
+  bool isMessageLiked(Map<String, dynamic> message) {
+    final currentUserId = widget.currentUserId!;
+    List<dynamic> likedBy = message['likedBy'] ?? [];
+    return likedBy.contains(currentUserId);
   }
 
   Future<File?> pickImage() async {
@@ -130,7 +192,27 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Chat"),
+        title: const Text("Chat"),
+        actions: [
+          if (_selectionMode)
+            IconButton(
+              icon: const Icon(Icons.cancel),
+              onPressed: () {
+                setState(() {
+                  _selectionMode = false;
+                  _selectedMessages.clear();
+                });
+              },
+            ),
+          if (_selectionMode)
+            IconButton(
+              icon: const Icon(
+                Icons.delete,
+                color: Colors.red,
+              ),
+              onPressed: deleteSelectedMessages,
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -237,82 +319,146 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMessageItem(DocumentSnapshot document) {
     Map<String, dynamic> message = document.data() as Map<String, dynamic>;
+    final messageId = document.id;
     final isMe = message['senderId'] == widget.currentUserId;
     final decryptedMessage = message['isEncrypted']
         ? EncryptionHelper.decryptMessage(message['message'])
         : message['message'];
-
     final messageType = message['type'];
+    final isLiked = isMessageLiked(message);
+    final isMessageSelected = _selectedMessages.contains(messageId);
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+    return GestureDetector(
+      onTap: () {
+        if (_selectionMode) {
+          _onMessageLongPress(document.id);
+        } else if (messageType == "image") {
+          navigateToShowSentImage(message['imageUrl']);
+        }
+      },
+      onDoubleTap: () async {
+        await toggleLike(document.id);
+      },
+      onLongPress: () {
+        _onMessageLongPress(document.id);
+      },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isMe ? Colors.blue : Colors.grey,
-          borderRadius: BorderRadius.circular(10),
-          gradient: isMe
-              ? const LinearGradient(
-                  colors: [AppPallete.gradient1, AppPallete.gradient2],
-                )
-              : null,
+        width: double.infinity,
+        decoration: isMessageSelected
+            ? BoxDecoration(
+                color: Colors.blue.withOpacity(0.5),
+              )
+            : null,
+        child: Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                _buildMessageContent(
+                    isMe, messageType, decryptedMessage, message),
+                if (isLiked)
+                  Container(
+                    padding: const EdgeInsets.all(5.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(50.0),
+                    ),
+                    child: isMe
+                        ? const Positioned(
+                            bottom: 5.0,
+                            right: 5.0,
+                            child: Icon(
+                              Icons.favorite,
+                              color: Colors.red,
+                              size: 15.0,
+                            ),
+                          )
+                        : const Positioned(
+                            bottom: -5.0,
+                            left: -5.0,
+                            child: Icon(
+                              Icons.favorite,
+                              color: Colors.red,
+                              size: 15.0,
+                            ),
+                          ),
+                  ),
+              ],
+            ),
+          ),
         ),
-        child: _buildMessageContent(messageType, decryptedMessage, message),
       ),
     );
   }
 
-  void navigateToShowSentImage(String imagePath) {
-    Navigator.pushNamed(
-      context,
-      '/show-image',
-      arguments: imagePath,
-    );
-  }
-
   Widget _buildMessageContent(
+    bool isMe,
     String messageType,
     String decryptedMessage,
     Map<String, dynamic> message,
   ) {
     switch (messageType) {
       case "text":
-        return Text(
-          decryptedMessage,
-          style: const TextStyle(color: Colors.white),
+        return Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16.0,
+            vertical: 8.0,
+          ),
+          decoration: BoxDecoration(
+            // color: isMe ? Colors.blue : Colors.grey,
+            gradient: isMe
+                ? const LinearGradient(
+                    colors: [AppPallete.gradient1, AppPallete.gradient2],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            decryptedMessage,
+            style: const TextStyle(color: Colors.white),
+          ),
         );
       case "image":
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () => {navigateToShowSentImage(message['imageUrl'])},
-              child: Container(
-                height: 200,
-                width: 200,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage(message['imageUrl']),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.network(
+                message['imageUrl'],
+                height: 200.0,
+                width: 200.0,
+                loadingBuilder: (BuildContext context, Widget child,
+                    ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
               ),
             ),
           ],
         );
       case "audio":
         return SizedBox(
-            width: 200,
-            child: CompactAudioPlayerWidget(audioUrl: message['audioUrl']));
+          width: 200,
+          child: CompactAudioPlayerWidget(audioUrl: message['audioUrl']),
+        );
       case "document":
         return GestureDetector(
           onTap: () async {
-            try {
-              print('Opening document');
-            } catch (e) {
-              print('Error opening file: $e');
-            }
+            // Handle document opening
           },
           child: const SizedBox(
             width: 100,
@@ -328,10 +474,19 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
         );
-
       default:
-        return const Text('File corrupted or not supported',
-            style: TextStyle(color: Colors.white));
+        return const Text(
+          'File corrupted or not supported',
+          style: TextStyle(color: Colors.white),
+        );
     }
+  }
+
+  void navigateToShowSentImage(String imagePath) {
+    Navigator.pushNamed(
+      context,
+      '/show-image',
+      arguments: imagePath,
+    );
   }
 }

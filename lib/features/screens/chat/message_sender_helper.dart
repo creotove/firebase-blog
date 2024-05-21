@@ -45,17 +45,18 @@ class MessageHelper {
     String message,
     String senderId,
     String receiverId,
-    MessageType type,
   ) async {
     try {
       final encrptedMessage = EncryptionHelper.encryptMessage(message);
+      const type = MessageType.text;
       Messages newMsg = Messages(
-          message: encrptedMessage,
-          senderId: senderId,
-          receiverId: receiverId,
-          type: type,
-          timestamp: Timestamp.now(),
-          isEncrypted: true);
+        message: encrptedMessage,
+        senderId: senderId,
+        receiverId: receiverId,
+        type: type,
+        timestamp: Timestamp.now(),
+        isEncrypted: true,
+      );
 
       List<String> ids = [senderId, receiverId];
       ids.sort();
@@ -74,14 +75,17 @@ class MessageHelper {
       await _firestore.collection('chatRooms').doc(chatRoomId).set({
         'lastMessage': encrptedMessage,
         'timestamp': Timestamp.now(),
+        'unread': true,
+        'type': 'text',
         'users': [senderId, receiverId],
         'senderName': senderDetails['username'],
+        'senderUserId': senderDetails['user_id'],
         'receiverName': receiverDetails['username'],
+        'receiverUserId': receiverDetails['user_id'],
       });
       await _sendNotification(receiverId, message);
     } catch (e) {
       print(e);
-      throw e;
     }
   }
 
@@ -124,6 +128,8 @@ class MessageHelper {
         'lastMessage': imageUrl,
         'timestamp': Timestamp.now(),
         'users': [senderId, receiverId],
+        'unread': true,
+        'type': "image",
         'senderName': senderDetails['username'],
         'receiverName': receiverDetails['username'],
       });
@@ -173,6 +179,8 @@ class MessageHelper {
         'lastMessage': audioUrl,
         'timestamp': Timestamp.now(),
         'users': [senderId, receiverId],
+        'unread': true,
+        'type': 'audio',
         'senderName': senderDetails['username'],
         'receiverName': receiverDetails['username'],
       });
@@ -222,6 +230,8 @@ class MessageHelper {
         'lastMessage': videoUrl,
         'timestamp': Timestamp.now(),
         'users': [senderId, receiverId],
+        'unread': true,
+        'type': 'video',
         'senderName': senderDetails['username'],
         'receiverName': receiverDetails['username'],
       });
@@ -238,18 +248,12 @@ class MessageHelper {
     String receiverId,
   ) async {
     try {
-      print(
-          '=====================Starting task to upload on firebase=========================');
       Reference ref = FirebaseStorage.instance
           .ref()
           .child('chat_documents/${DateTime.now().millisecondsSinceEpoch}.pdf');
       UploadTask uploadTask = ref.putFile(_document!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String documentUrl = await taskSnapshot.ref.getDownloadURL();
-      print(
-          '======================Upload to firebase task completed========================');
-      print(
-          '=======================Starting creating Message Object=======================');
       Messages newMsg = Messages(
         message: documentUrl,
         documentUrl: documentUrl,
@@ -258,46 +262,30 @@ class MessageHelper {
         type: MessageType.document,
         timestamp: Timestamp.now(),
       );
-      print(
-          '=====================Message object creation finished=========================');
 
       List<String> ids = [senderId, receiverId];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
-      print(
-          '=====================Getting sender details=========================');
       final senderDetails = await AuthenticationBloc().getUserDetailsById(
         senderId,
       );
-      print(
-          '=====================Finish sender details=========================');
-      print(
-          '=====================Getting receiver details=========================');
       final receiverDetails = await AuthenticationBloc().getUserDetailsById(
         receiverId,
       );
-      print(
-          '=====================Finish receiver details=========================');
-      print(
-          '=====================Storing final data to sub doc=========================');
       await _firestore
           .collection('chatRooms')
           .doc(chatRoomId)
           .collection('messages')
           .add(newMsg.toMap());
-      print(
-          '=====================done final data to sub doc=========================');
-      print(
-          '=====================start final data to main doc=========================');
       await _firestore.collection('chatRooms').doc(chatRoomId).set({
         'lastMessage': documentUrl,
         'timestamp': Timestamp.now(),
         'users': [senderId, receiverId],
+        'unread': true,
+        'type': 'document',
         'senderName': senderDetails['username'],
         'receiverName': receiverDetails['username'],
       });
-      print(
-          '=====================done final data to main doc=========================');
       await _sendNotification(receiverId, 'Document');
     } catch (e) {
       print(e);

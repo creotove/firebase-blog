@@ -57,7 +57,7 @@
 //           ),
 //         ),
 //         Text(
-//           dateTimeFormatter(createdAt).toString(),
+//           dateTimeFormatterTimeStamp(createdAt).toString(),
 //           style: const TextStyle(color: Colors.grey),
 //         ),
 //         // Row(
@@ -164,7 +164,7 @@
 //           ),
 //           const SizedBox(height: 4),
 //           Text(
-//             '${dateTimeFormatter(reply['created_at'])}',
+//             '${dateTimeFormatterTimeStamp(reply['created_at'])}',
 //             style: const TextStyle(color: Colors.grey, fontSize: 12),
 //           ),
 //         ],
@@ -336,7 +336,7 @@ class _CommentWidgetState extends State<CommentWidget> {
           ),
         ),
         Text(
-          dateTimeFormatter(createdAt).toString(),
+          dateTimeFormatterTimeStamp(createdAt).toString(),
           style: const TextStyle(color: Colors.grey),
         ),
         LikeDislike(commentId: commentId, commentData: commentData),
@@ -438,7 +438,7 @@ class _CommentWidgetState extends State<CommentWidget> {
           ),
           const SizedBox(height: 4),
           Text(
-            dateTimeFormatter(reply['created_at']),
+            dateTimeFormatterTimeStamp(reply['created_at']),
             style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],

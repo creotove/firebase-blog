@@ -61,7 +61,7 @@ class _ManageCommentsPageState extends State<ManageCommentsPage> {
                 return ListTile(
                   title: Text('Comment : ${comment['comment']}'),
                   subtitle: Text('By - @${comment["username"]}'
-                      ' ${dateTimeFormatter(comment["created_at"])}'),
+                      ' ${dateTimeFormatterTimeStamp(comment["created_at"])}'),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: () => _deleteComment(comment.id),

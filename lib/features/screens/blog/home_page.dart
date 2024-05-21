@@ -157,7 +157,7 @@ class BlogListPage extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              dateTimeFormatter(blog['created_at']),
+                              dateTimeFormatterTimeStamp(blog['created_at']),
                               style: const TextStyle(fontSize: 12),
                             ),
                           ],

@@ -1,72 +1,12 @@
 // ignore_for_file: avoid_print, use_rethrow_when_possible
 
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:blog/authentication.dart';
-import 'package:blog/secrets/fcm_server_key.dart';
+import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart' as http;
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Future<void> sendMessage(
-  //   String message,
-  //   String senderId,
-  //   String receiverId,
-  //   MessageType type,
-  // ) async {
-  //   try {
-  //     final encrptedMessage = EncryptionHelper.encryptMessage(message);
-  //     Messages newMsg = Messages(
-  //       message: encrptedMessage,
-  //       senderId: senderId,
-  //       receiverId: receiverId,
-  //       type: type,
-  //       timestamp: Timestamp.now(),
-  //     );
-
-  //     List<String> ids = [senderId, receiverId];
-  //     ids.sort();
-  //     String chatRoomId = '${ids[0]}_${ids[1]}';
-  //     final senderDetails = await AuthenticationBloc().getUserDetailsById(
-  //       senderId,
-  //     );
-  //     final receiverDetails = await AuthenticationBloc().getUserDetailsById(
-  //       receiverId,
-  //     );
-  //     await _firestore
-  //         .collection('chatRooms')
-  //         .doc(chatRoomId)
-  //         .collection('messages')
-  //         .add(newMsg.toMap());
-  //     await _firestore.collection('chatRooms').doc(chatRoomId).set({
-  //       'lastMessage': encrptedMessage,
-  //       'timestamp': Timestamp.now(),
-  //       'users': [senderId, receiverId],
-  //       'senderName': senderDetails['username'],
-  //       'receiverName': receiverDetails['username'],
-  //     });
-  //     await _sendNotification(receiverId, message);
-  //   } catch (e) {
-  //     print(e);
-  //     throw e;
-  //   }
-  // }
-
-  // Stream<QuerySnapshot> getMessages(String senderId, String receiverId) {
-  //   List<String> ids = [senderId, receiverId];
-  //   ids.sort();
-  //   String chatRoomId = '${ids[0]}_${ids[1]}';
-
-  //   return _firestore
-  //       .collection('chatRooms')
-  //       .doc(chatRoomId)
-  //       .collection('messages')
-  //       .orderBy('timestamp', descending: true)
-  //       .snapshots();
-  // }
   Stream<QuerySnapshot> getMessages(String senderId, String receiverId) {
     List<String> ids = [senderId, receiverId];
     ids.sort();
@@ -78,37 +18,6 @@ class ChatService {
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .snapshots();
-  }
-
-  Future<void> _sendNotification(String receiverId, String message) async {
-    try {
-      DocumentSnapshot userDoc = await _firestore
-          .collection('users')
-          .where('user_id', isEqualTo: receiverId)
-          .get()
-          .then((value) => value.docs.first);
-      final userdata = userDoc.data();
-      String receiverToken = (userdata as Map<String, dynamic>)['fcmToken'];
-      final senderDetails = await AuthenticationBloc().getUserDetails();
-      final senderName = senderDetails['username'];
-      if (receiverToken.isNotEmpty) {
-        await http.post(Uri.parse('https://fcm.googleapis.com/fcm/send'),
-            headers: {
-              HttpHeaders.contentTypeHeader: 'application/json',
-              HttpHeaders.authorizationHeader: FcmSecrets.serverKey,
-            },
-            body: jsonEncode({
-              'to': receiverToken,
-              'notification': {
-                'title': "Message from $senderName",
-                'body': message,
-              },
-            }));
-      }
-    } catch (e) {
-      print(e);
-      throw e;
-    }
   }
 
   Future<List<String>> getAllChatRooms() async {
@@ -134,32 +43,40 @@ class ChatService {
     }
   }
 
-  Future<List<Map<String, String>>> getChatRoomsForUser() async {
+  Stream<List<Map<String, dynamic>>> getChatRoomsStreamForUser() async* {
     try {
-      final chatRoomIds = await getAllChatRooms();
       final loggedInUser = await AuthenticationBloc().getUserDetails();
-      String senderId = loggedInUser['user_id'];
-      List<String> receiverIds = [];
-      for (var chatRoomId in chatRoomIds) {
-        DocumentSnapshot chatRoomDoc =
-            await _firestore.collection('chatRooms').doc(chatRoomId).get();
-        List<dynamic> users = chatRoomDoc['users'];
+      String userLoggedIn = loggedInUser['user_id'];
 
-        String receiverUserId = users[0] == senderId ? users[1] : users[0];
-        receiverIds.add(receiverUserId);
-      }
-      List<Map<String, String>> chatRooms = [];
-      for (var receiverId in receiverIds) {
-        final userDoc =
-            await AuthenticationBloc().getUserDetailsById(receiverId);
-        chatRooms.add({
-          'userId': receiverId,
-          'username': userDoc['username'],
-          'avatar': userDoc['avatar'] ??
-              'https://www.w3schools.com/howto/img_avatar.png',
-        });
-      }
-      return chatRooms;
+      yield* _firestore
+          .collection('chatRooms')
+          .where('users', arrayContains: userLoggedIn)
+          .snapshots()
+          .asyncMap((snapshot) async {
+        List<Map<String, dynamic>> chatRooms = [];
+        for (var doc in snapshot.docs) {
+          final chatRoom = doc.data();
+
+          final userDoc = await AuthenticationBloc()
+              .getUserDetailsById(chatRoom['receiverUserId']);
+
+          chatRooms.add({
+            'chatRoomId': doc.id,
+            'senderUserId': chatRoom['senderUserId'],
+            'receiverId': chatRoom['receiverUserId'],
+            'username': userDoc['username'],
+            'avatar': userDoc['avatar'] ??
+                'https://www.w3schools.com/howto/img_avatar.png',
+            'lastMessage': chatRoom['type'] == 'text'
+                ? EncryptionHelper.decryptMessage(chatRoom['lastMessage'])
+                : 'Attachment',
+            'unread': chatRoom['unread'],
+            'timestamp': chatRoom['timestamp'].toDate(),
+          });
+        }
+        print(chatRooms);
+        return chatRooms;
+      });
     } catch (e) {
       print(e);
       throw e;
