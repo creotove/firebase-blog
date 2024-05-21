@@ -4,57 +4,69 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:blog/authentication.dart';
-import 'package:blog/features/models/message.dart';
 import 'package:blog/secrets/fcm_server_key.dart';
-import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> sendMessage(
-    String message,
-    String senderId,
-    String receiverId,
-  ) async {
-    try {
-      final encrptedMessage = EncryptionHelper.encryptMessage(message);
-      Message newMessage = Message(
-        message: encrptedMessage,
-        senderId: senderId,
-        receiverId: receiverId,
-        timestamp: Timestamp.now(),
-      );
+  // Future<void> sendMessage(
+  //   String message,
+  //   String senderId,
+  //   String receiverId,
+  //   MessageType type,
+  // ) async {
+  //   try {
+  //     final encrptedMessage = EncryptionHelper.encryptMessage(message);
+  //     Messages newMsg = Messages(
+  //       message: encrptedMessage,
+  //       senderId: senderId,
+  //       receiverId: receiverId,
+  //       type: type,
+  //       timestamp: Timestamp.now(),
+  //     );
 
-      List<String> ids = [senderId, receiverId];
-      ids.sort();
-      String chatRoomId = '${ids[0]}_${ids[1]}';
-      final senderDetails = await AuthenticationBloc().getUserDetailsById(
-        senderId,
-      );
-      final receiverDetails = await AuthenticationBloc().getUserDetailsById(
-        receiverId,
-      );
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .collection('messages')
-          .add(newMessage.toMap());
-      await _firestore.collection('chatRooms').doc(chatRoomId).set({
-        'lastMessage': message,
-        'timestamp': Timestamp.now(),
-        'users': [senderId, receiverId],
-        'senderName': senderDetails['username'],
-        'receiverName': receiverDetails['username'],
-      });
-      await _sendNotification(receiverId, message);
-    } catch (e) {
-      print(e);
-      throw e;
-    }
-  }
+  //     List<String> ids = [senderId, receiverId];
+  //     ids.sort();
+  //     String chatRoomId = '${ids[0]}_${ids[1]}';
+  //     final senderDetails = await AuthenticationBloc().getUserDetailsById(
+  //       senderId,
+  //     );
+  //     final receiverDetails = await AuthenticationBloc().getUserDetailsById(
+  //       receiverId,
+  //     );
+  //     await _firestore
+  //         .collection('chatRooms')
+  //         .doc(chatRoomId)
+  //         .collection('messages')
+  //         .add(newMsg.toMap());
+  //     await _firestore.collection('chatRooms').doc(chatRoomId).set({
+  //       'lastMessage': encrptedMessage,
+  //       'timestamp': Timestamp.now(),
+  //       'users': [senderId, receiverId],
+  //       'senderName': senderDetails['username'],
+  //       'receiverName': receiverDetails['username'],
+  //     });
+  //     await _sendNotification(receiverId, message);
+  //   } catch (e) {
+  //     print(e);
+  //     throw e;
+  //   }
+  // }
 
+  // Stream<QuerySnapshot> getMessages(String senderId, String receiverId) {
+  //   List<String> ids = [senderId, receiverId];
+  //   ids.sort();
+  //   String chatRoomId = '${ids[0]}_${ids[1]}';
+
+  //   return _firestore
+  //       .collection('chatRooms')
+  //       .doc(chatRoomId)
+  //       .collection('messages')
+  //       .orderBy('timestamp', descending: true)
+  //       .snapshots();
+  // }
   Stream<QuerySnapshot> getMessages(String senderId, String receiverId) {
     List<String> ids = [senderId, receiverId];
     ids.sort();

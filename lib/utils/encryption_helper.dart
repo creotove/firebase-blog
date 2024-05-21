@@ -1,7 +1,7 @@
 import 'package:encrypt/encrypt.dart';
 
 class EncryptionHelper {
-git   static String decryptMessage(String encrypted) {
+  static String decryptMessage(String encrypted) {
     final key =
         Key.fromUtf8("1245714587458888"); //hardcode combination of 16 character
     final iv =
