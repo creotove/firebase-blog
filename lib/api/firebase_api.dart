@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:blog/authentication.dart';
+import 'package:blog/features/screens/chat/argument_helper.dart.dart';
 import 'package:blog/utils/context_utility_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -59,10 +60,26 @@ class FirebaseApi {
     }
   }
 
-  void handleMessage(RemoteMessage message) {
-    if (message.notification == null) return;
-    ContextUtilityService.navigatorKey.currentState
-        ?.pushNamed('/my-profile', arguments: message);
+  void handleMessage(RemoteMessage message) async {
+    if (message.data.isEmpty) return;
+    final route = message.data['route'];
+    final receiverUserId = await AuthenticationBloc().getCurrentUserId();
+    final senderUserId = message.data['senderUserId'];
+    final myArgs = MessageNotificationArgs(
+      receiverUserId: senderUserId,
+      senderUserId: receiverUserId.toString(),
+      route: route,
+      authBloc: AuthenticationBloc(),
+    );
+    print("=================================");
+    print("receiverUserId: $receiverUserId");
+    print("senderUserId: $senderUserId");
+    print("route: $route");
+
+    if (route == '/chat' && receiverUserId != null) {
+      ContextUtilityService.navigatorKey.currentState
+          ?.pushNamed(route, arguments: myArgs);
+    }
   }
 
   Future<void> initLocalPushNotifications() async {

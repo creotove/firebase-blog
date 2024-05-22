@@ -2,6 +2,7 @@
 
 import 'package:blog/authentication.dart';
 import 'package:blog/features/models/message.dart';
+import 'package:blog/features/screens/chat/argument_helper.dart.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -12,6 +13,7 @@ import 'package:blog/secrets/fcm_server_key.dart';
 
 class MessageHelper {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   Future<void> _sendNotification(String receiverId, String message) async {
     try {
       DocumentSnapshot userDoc = await _firestore
@@ -34,6 +36,11 @@ class MessageHelper {
               'notification': {
                 'title': "Message from $senderName",
                 'body': message,
+              },
+              'data': {
+                'route': '/chat',
+                'receiverUserId': receiverId,
+                'senderUserId': senderDetails['user_id'],
               },
             }));
       }

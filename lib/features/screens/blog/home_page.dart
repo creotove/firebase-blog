@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:blog/api/firebase_api.dart';
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/profile/my_blogs.dart';
@@ -35,9 +34,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _selectedIndex = index;
     });
-    if (index == 2) {
-      await FirebaseApi().initNotifications();
-    }
   }
 
   @override

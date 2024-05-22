@@ -110,6 +110,8 @@ class _ChatsPageState extends State<ChatsPage> {
                               });
                             }
                             if (receiverUserId == loggedInUserId) {
+                              print('receiverUserId: $receiverUserId');
+                              print('loggedInUserId: $loggedInUserId');
                               Navigator.push(context,
                                   MaterialPageRoute(builder: (context) {
                                 return ChatPage(
@@ -119,6 +121,8 @@ class _ChatsPageState extends State<ChatsPage> {
                                 );
                               }));
                             } else {
+                              print('receiverUserId: $receiverUserId');
+                              print('loggedInUserId: $loggedInUserId');
                               Navigator.push(context,
                                   MaterialPageRoute(builder: (context) {
                                 return ChatPage(

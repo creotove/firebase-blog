@@ -82,7 +82,7 @@ class _SignUpPageState extends State<SignUpPage> {
           .then((_) {
         // Navigate to home page if sign-up is successful
         Navigator.pushReplacementNamed(context,
-            '/'); // Adjust the route name as per your app's navigation setup
+            '/signin'); // Adjust the route name as per your app's navigation setup
       }).catchError((error) {
         // Handle sign-up error
         showDialog(

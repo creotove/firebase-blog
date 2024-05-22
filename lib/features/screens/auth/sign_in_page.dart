@@ -1,5 +1,6 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
+import 'package:blog/api/firebase_api.dart';
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
 import 'package:blog/widgets/gradient_button.dart';
@@ -70,6 +71,7 @@ class _SignInPageState extends State<SignInPage> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+      await FirebaseApi().initNotifications();
       await Navigator.pushReplacementNamed(context, '/');
     } catch (e) {
       showDialog(

@@ -14,13 +14,13 @@ import 'package:url_launcher/url_launcher.dart';
 class ChatPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
   final String receiverUserId;
-  final String? currentUserId;
+  final String currentUserId;
 
   const ChatPage({
     super.key,
     required this.authBloc,
     required this.receiverUserId,
-    this.currentUserId = '',
+    required this.currentUserId,
   });
 
   @override
@@ -50,7 +50,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> toggleLike(String messageId) async {
-    final currentUserId = widget.currentUserId!;
+    final currentUserId = widget.currentUserId;
     final List users = [widget.currentUserId, widget.receiverUserId];
     users.sort();
     final messageRef = FirebaseFirestore.instance
@@ -84,7 +84,7 @@ class _ChatPageState extends State<ChatPage> {
     if (pickedImage != null) {
       final arguments = SendImageArguments(
         image: pickedImage,
-        currentUserId: widget.currentUserId!,
+        currentUserId: widget.currentUserId,
         receiverUserId: widget.receiverUserId,
       );
       await Navigator.pushNamed(
@@ -100,7 +100,7 @@ class _ChatPageState extends State<ChatPage> {
     if (pickedAudio != null) {
       final arguments = SendAudioArguments(
         audio: pickedAudio,
-        currentUserId: widget.currentUserId!,
+        currentUserId: widget.currentUserId,
         receiverUserId: widget.receiverUserId,
       );
       await Navigator.pushNamed(
@@ -116,7 +116,7 @@ class _ChatPageState extends State<ChatPage> {
     if (pickedDocument != null) {
       final arguments = SendDocumentArguments(
         document: pickedDocument,
-        currentUserId: widget.currentUserId!,
+        currentUserId: widget.currentUserId,
         receiverUserId: widget.receiverUserId,
       );
       await Navigator.pushNamed(
@@ -125,6 +125,16 @@ class _ChatPageState extends State<ChatPage> {
         arguments: arguments,
       );
     }
+  }
+
+  Future<String> getCurrentUser() async {
+    final userDetails = await widget.authBloc.getUserDetails();
+    if (userDetails.isEmpty) {
+      Navigator.pushNamed(context, '/login');
+      return '';
+    }
+    final currentUserId = userDetails['user_id'];
+    return currentUserId;
   }
 
   @override
@@ -155,7 +165,7 @@ class _ChatPageState extends State<ChatPage> {
                     ),
                     onPressed: () async {
                       final deleted = await _chatService.deleteSelectedMessages(
-                          widget.currentUserId!,
+                          widget.currentUserId,
                           widget.receiverUserId,
                           selectedMessages);
                       if (deleted) {
@@ -248,7 +258,7 @@ class _ChatPageState extends State<ChatPage> {
                     if (message.isNotEmpty) {
                       _chatService.sendMessage(
                         message,
-                        widget.currentUserId!,
+                        widget.currentUserId,
                         widget.receiverUserId,
                       );
                       _messageController.clear();
@@ -265,8 +275,8 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMessagesList() {
     return StreamBuilder<QuerySnapshot>(
-      stream: _chatService.getMessages(
-          widget.currentUserId!, widget.receiverUserId),
+      stream:
+          _chatService.getMessages(widget.currentUserId, widget.receiverUserId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

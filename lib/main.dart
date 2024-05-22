@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print
 
+import 'package:blog/api/firebase_api.dart';
 import 'package:blog/features/screens/blog/add_blog_page.dart';
 import 'package:blog/features/screens/blog/blog_edit.dart';
 import 'package:blog/features/screens/blog/blog_view_page.dart';
@@ -48,6 +49,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
   void initDynamicLinks(BuildContext context) async {
     try {
       FirebaseDynamicLinks.instance.onLink.listen((dynamicLink) {
@@ -101,6 +103,7 @@ class _MyAppState extends State<MyApp> {
       title: 'Blog App',
       theme: AppTheme.darkThemeMode,
       navigatorKey: ContextUtilityService.navigatorKey,
+      navigatorObservers: [routeObserver],
       initialRoute: '/',
       routes: {
         '/': (context) {
@@ -122,6 +125,7 @@ class _MyAppState extends State<MyApp> {
         '/edit-profile': (context) =>
             EditProfilePage(authBloc: widget.authBloc),
         '/signup': (context) => SignUpPage(authBloc: widget.authBloc),
+        '/signin': (context) => SignInPage(authBloc: widget.authBloc),
         '/my-profile': (context) => MyProfilePage(authBloc: widget.authBloc),
         '/user-profile': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
@@ -175,11 +179,16 @@ class _MyAppState extends State<MyApp> {
           }
         },
         '/chat': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as String;
+          final args = ModalRoute.of(context)!.settings.arguments
+              as MessageNotificationArgs;
           if (widget.authBloc.isAuthenticated()) {
+            print('receiverUserId: ${args.receiverUserId}');
+            print('senderUserId: ${args.senderUserId}');
+            print('route: ${args.route}');
             return ChatPage(
-              authBloc: widget.authBloc,
-              receiverUserId: args,
+              authBloc: args.authBloc,
+              receiverUserId: args.receiverUserId,
+              currentUserId: args.senderUserId,
             );
           } else {
             return SignInPage(authBloc: widget.authBloc);
