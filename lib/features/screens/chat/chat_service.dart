@@ -103,30 +103,66 @@ class ChatService {
     }
   }
 
-  Future<bool> deleteSelectedMessages(
-      String senderUserId, String receiverUserId, Set selectedMessages) async {
+  Future<bool> deleteSelectedMessages(String senderUserId,
+      String receiverUserId, Set<String> selectedMessages) async {
     try {
-      bool isDeleted = false;
       List<String> ids = [senderUserId, receiverUserId];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
-      print(selectedMessages);
 
-      for (var messageId in selectedMessages) {
+      bool allDeleted = true;
+
+      // Fetch messages to verify ownership and for updating last message
+      var messagesCollection = FirebaseFirestore.instance
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .collection('messages');
+
+      var messagesSnapshot = await messagesCollection
+          .where(FieldPath.documentId, whereIn: selectedMessages.toList())
+          .get();
+
+      if (messagesSnapshot.docs.any((doc) => doc['senderId'] != senderUserId)) {
+        // If any message is not sent by the sender, deny deletion
+        print('Error: User can only delete their own messages');
+        return false;
+      }
+
+      // Delete messages in a transaction
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        for (var messageDoc in messagesSnapshot.docs) {
+          transaction.delete(messageDoc.reference);
+        }
+      });
+
+      // Check and update the last message in chat room
+      var lastMessageSnapshot = await messagesCollection
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
+
+      if (lastMessageSnapshot.docs.isNotEmpty) {
+        var lastMessageData = lastMessageSnapshot.docs.first.data();
         await FirebaseFirestore.instance
             .collection('chatRooms')
             .doc(chatRoomId)
-            .collection('messages')
-            .doc(messageId)
-            .delete()
-            .then((value) {
-          isDeleted = true;
+            .update({
+          'lastMessage': lastMessageData,
         });
-        print(messageId);
+      } else {
+        // If no messages left, update last message field to null
+        await FirebaseFirestore.instance
+            .collection('chatRooms')
+            .doc(chatRoomId)
+            .update({
+          'lastMessage': null,
+        });
       }
-      return isDeleted;
+
+      print('All messages deleted: $allDeleted');
+      return allDeleted;
     } catch (e) {
-      print(e);
+      print('Error in deleteSelectedMessages: $e');
       return false;
     }
   }

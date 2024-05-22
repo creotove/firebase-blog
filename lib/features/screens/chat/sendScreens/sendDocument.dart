@@ -17,6 +17,8 @@
 //     this.currentUserId,
 //   });
 
+// ignore_for_file: prefer_const_constructors
+
 //   @override
 //   Widget build(BuildContext context) {
 //     return const Placeholder();
@@ -48,7 +50,6 @@ class SendDocument extends StatefulWidget {
 
 class _SendDocumentState extends State<SendDocument> {
   void _sendDocument() async {
-    print('Sending document');
     await MessageHelper().sendDocumentMessage(
       widget.document,
       widget.currentUserId!,
@@ -71,7 +72,7 @@ class _SendDocumentState extends State<SendDocument> {
       ),
       body: Column(
         children: [
-          SizedBox(
+          const SizedBox(
             height: 250,
             width: double.infinity,
             child: Icon(Icons.insert_drive_file, size: 100, color: Colors.grey),

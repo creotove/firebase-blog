@@ -22,6 +22,8 @@ class Messages {
   final MessageType type;
   final likedBy = [];
   final bool isEncrypted;
+  final bool isDeltedBySender = false;
+  final bool isDeltedByReceiver = false;
 
   Messages({
     required this.message,
@@ -51,6 +53,8 @@ class Messages {
       'likedBy': likedBy,
       'type': type.toString().split('.').last,
       'isEncrypted': isEncrypted,
+      'isDeltedBySender': isDeltedBySender,
+      'isDeltedByReceiver': isDeltedByReceiver,
     };
   }
 }

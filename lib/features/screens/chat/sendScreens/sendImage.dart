@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:blog/features/screens/chat/message_sender_helper.dart';
+import 'package:blog/utils/show_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/authentication.dart';
 
@@ -23,13 +24,28 @@ class SendImage extends StatefulWidget {
 }
 
 class _SendImageState extends State<SendImage> {
-  void _sendImage() {
-    MessageHelper().sendImageMessage(
-      widget.image,
-      widget.currentUserId!,
-      widget.receiverUserId!,
-    );
-    Navigator.pop(context);
+  bool isSending = false;
+  void _sendImage() async {
+    try {
+      setState(() {
+        isSending = true;
+      });
+      await MessageHelper().sendImageMessage(
+        widget.image,
+        widget.currentUserId!,
+        widget.receiverUserId!,
+      );
+      Navigator.pop(context);
+      setState(() {
+        showSnackBar(context, 'Image sent successfully!');
+      });
+    } catch (e) {
+      print(e);
+    } finally {
+      setState(() {
+        isSending = false;
+      });
+    }
   }
 
   @override
@@ -38,10 +54,15 @@ class _SendImageState extends State<SendImage> {
       appBar: AppBar(
         title: const Text('Send Image'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendImage,
-          ),
+          if (isSending)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: _sendImage,
+            ),
         ],
       ),
       body: Column(

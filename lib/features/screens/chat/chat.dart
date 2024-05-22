@@ -9,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
@@ -70,9 +71,12 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   bool isMessageLiked(Map<String, dynamic> message) {
-    final currentUserId = widget.currentUserId!;
     List<dynamic> likedBy = message['likedBy'] ?? [];
-    return likedBy.contains(currentUserId);
+    if (likedBy.isNotEmpty) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void _pickImage() async {
@@ -135,7 +139,6 @@ class _ChatPageState extends State<ChatPage> {
               if (selectedMessages.isEmpty) {
                 return Container();
               }
-              print('Selected messages: $selectedMessages');
               return Row(
                 children: [
                   IconButton(
@@ -303,7 +306,7 @@ class _ChatPageState extends State<ChatPage> {
     final isMessageSelected = selectedMessages.contains(messageId);
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         if (_selectionMode) {
           _onMessageLongPress(document.id);
         } else if (messageType == "image") {
@@ -312,6 +315,24 @@ class _ChatPageState extends State<ChatPage> {
             '/show-image',
             arguments: message['imageUrl'],
           );
+        } else if (messageType == 'document') {
+          final documentUrl = message['documentUrl'];
+          if (documentUrl != null) {
+            try {
+              if (await canLaunchUrl(Uri.parse(documentUrl))) {
+                await launchUrl(Uri.parse(documentUrl));
+              } else {
+                throw 'Could not launch $documentUrl';
+              }
+            } catch (e) {
+              print('Error opening document: $e');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to open document'),
+                ),
+              );
+            }
+          }
         }
       },
       onDoubleTap: () async {
@@ -425,29 +446,69 @@ class _ChatPageState extends State<ChatPage> {
           ],
         );
       case "audio":
-        return SizedBox(
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            gradient: isMe
+                ? const LinearGradient(
+                    colors: [AppPallete.gradient1, AppPallete.gradient2],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.all(8.0),
           width: 200,
           child: CompactAudioPlayerWidget(audioUrl: message['audioUrl']),
         );
       case "document":
-        return GestureDetector(
-          onTap: () async {
-            // Handle document opening
-          },
-          child: const SizedBox(
-            width: 100,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(Icons.insert_drive_file, color: Colors.white),
-                Text(
-                  'Document',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
+        // return GestureDetector(
+        //   onTap: () async {
+        //     if (_selectionMode) {
+        //       return;
+        //     }
+        //     final documentUrl = message['documentUrl'];
+        //     if (documentUrl != null) {
+        //       try {
+        //         if (await canLaunchUrl(Uri.parse(documentUrl))) {
+        //           await launchUrl(Uri.parse(documentUrl));
+        //         } else {
+        //           throw 'Could not launch $documentUrl';
+        //         }
+        //       } catch (e) {
+        //         print('Error opening document: $e');
+        //         ScaffoldMessenger.of(context).showSnackBar(
+        //           const SnackBar(
+        //             content: Text('Failed to open document'),
+        //           ),
+        //         );
+        //       }
+        //     }
+        //   },
+        //   child:
+        return Container(
+          width: 100,
+          decoration: BoxDecoration(
+            color: Colors.blue,
+            gradient: isMe
+                ? const LinearGradient(
+                    colors: [AppPallete.gradient1, AppPallete.gradient2],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: const EdgeInsets.all(8.0),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(Icons.insert_drive_file, color: Colors.white),
+              Text(
+                'Document',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
           ),
         );
+      // );
       default:
         return const Text(
           'File corrupted or not supported',

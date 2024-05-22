@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 class CompactAudioPlayerWidget extends StatefulWidget {
   final String audioUrl;
 
-  const CompactAudioPlayerWidget({Key? key, required this.audioUrl})
-      : super(key: key);
+  const CompactAudioPlayerWidget({super.key, required this.audioUrl});
 
   @override
   _CompactAudioPlayerWidgetState createState() =>
@@ -51,7 +50,14 @@ class _CompactAudioPlayerWidgetState extends State<CompactAudioPlayerWidget> {
   }
 
   Future<void> _loadAudio() async {
-    await _audioPlayer.setSourceUrl(widget.audioUrl);
+    try {
+      if (widget.audioUrl.isEmpty) {
+        return;
+      }
+      await _audioPlayer.setSourceUrl(widget.audioUrl);
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -95,7 +101,7 @@ class _CompactAudioPlayerWidgetState extends State<CompactAudioPlayerWidget> {
         Text(
           '${position.inMinutes}:${(position.inSeconds % 60).toString().padLeft(2, '0')} / '
           '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             color: Colors.white,
           ),
