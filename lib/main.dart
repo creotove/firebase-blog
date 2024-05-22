@@ -31,10 +31,10 @@ void main() async {
   try {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
+
     final authBloc = AuthenticationBloc();
     runApp(MyApp(authBloc: authBloc));
   } catch (e) {
-    print('=========================');
     print(e);
   }
 }

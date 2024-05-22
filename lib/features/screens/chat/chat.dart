@@ -1,8 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print, use_rethrow_when_possible
 
-import 'dart:io';
 import 'package:blog/features/screens/chat/chat_service.dart';
-import 'package:blog/features/screens/chat/message_sender_helper.dart';
 import 'package:blog/features/screens/chat/argument_helper.dart.dart';
 import 'package:blog/theme/app_pallete.dart';
 import 'package:blog/utils/encryption_helper.dart';
@@ -12,8 +10,6 @@ import 'package:blog/widgets/text_filed.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
 
 class ChatPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
@@ -36,41 +32,6 @@ class _ChatPageState extends State<ChatPage> {
   final ChatService _chatService = ChatService();
   final Set _selectedMessages = {};
   bool _selectionMode = false;
-
-  void sendMessage() async {
-    try {
-      if (_messageController.text.trim().isNotEmpty) {
-        final chatMessage = _messageController.text.trim();
-        _messageController.clear();
-
-        await MessageHelper().sendMessage(
-          chatMessage,
-          widget.currentUserId!,
-          widget.receiverUserId,
-        );
-      }
-    } catch (e) {
-      print(e);
-      throw e;
-    }
-  }
-
-  Future<void> deleteSelectedMessages() async {
-    final List users = [widget.currentUserId, widget.receiverUserId];
-    users.sort();
-    final chatRoomRef = FirebaseFirestore.instance
-        .collection('chatRooms')
-        .doc(users[0] + '_' + users[1])
-        .collection('messages');
-
-    for (String messageId in _selectedMessages) {
-      await chatRoomRef.doc(messageId).delete();
-    }
-
-    setState(() {
-      _selectedMessages.clear();
-    });
-  }
 
   void _onMessageLongPress(String messageId) {
     setState(() {
@@ -115,17 +76,8 @@ class _ChatPageState extends State<ChatPage> {
     return likedBy.contains(currentUserId);
   }
 
-  Future<File?> pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      return File(pickedFile.path);
-    }
-    return null;
-  }
-
   void _pickImage() async {
-    final pickedImage = await pickImage();
+    final pickedImage = await _chatService.pickImage();
     if (pickedImage != null) {
       final arguments = SendImageArguments(
         image: pickedImage,
@@ -140,16 +92,8 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<File?> pickAudio() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    if (result != null) {
-      return File(result.files.single.path!);
-    }
-    return null;
-  }
-
   void _pickAudio() async {
-    final pickedAudio = await pickAudio();
+    final pickedAudio = await _chatService.pickAudio();
     if (pickedAudio != null) {
       final arguments = SendAudioArguments(
         audio: pickedAudio,
@@ -164,16 +108,8 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<File?> pickDocument() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
-    if (result != null) {
-      return File(result.files.single.path!);
-    }
-    return null;
-  }
-
   void _pickDocument() async {
-    final pickedDocument = await pickDocument();
+    final pickedDocument = await _chatService.pickDocument();
     if (pickedDocument != null) {
       final arguments = SendDocumentArguments(
         document: pickedDocument,
@@ -206,12 +142,29 @@ class _ChatPageState extends State<ChatPage> {
             ),
           if (_selectionMode)
             IconButton(
-              icon: const Icon(
-                Icons.delete,
-                color: Colors.red,
-              ),
-              onPressed: deleteSelectedMessages,
-            ),
+                icon: const Icon(
+                  Icons.delete,
+                  color: Colors.red,
+                ),
+                onPressed: () async {
+                  final deleted = await _chatService.deleteSelectedMessages(
+                      widget.currentUserId!,
+                      widget.receiverUserId,
+                      _selectedMessages);
+                  if (deleted) {
+                    setState(() {
+                      _selectionMode = false;
+                      _selectedMessages.clear();
+                    });
+                  } else {
+                    print('Failed to delete messages');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to delete messages'),
+                      ),
+                    );
+                  }
+                }),
         ],
       ),
       body: Column(
@@ -281,7 +234,15 @@ class _ChatPageState extends State<ChatPage> {
                 IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () {
-                    sendMessage();
+                    final message = _messageController.text.trim();
+                    if (message.isNotEmpty) {
+                      _chatService.sendMessage(
+                        message,
+                        widget.currentUserId!,
+                        widget.receiverUserId,
+                      );
+                      _messageController.clear();
+                    }
                   },
                 ),
               ],
@@ -333,7 +294,11 @@ class _ChatPageState extends State<ChatPage> {
         if (_selectionMode) {
           _onMessageLongPress(document.id);
         } else if (messageType == "image") {
-          navigateToShowSentImage(message['imageUrl']);
+          Navigator.pushNamed(
+            context,
+            '/show-image',
+            arguments: message['imageUrl'],
+          );
         }
       },
       onDoubleTap: () async {
@@ -411,7 +376,7 @@ class _ChatPageState extends State<ChatPage> {
             vertical: 8.0,
           ),
           decoration: BoxDecoration(
-            // color: isMe ? Colors.blue : Colors.grey,
+            color: Colors.blue,
             gradient: isMe
                 ? const LinearGradient(
                     colors: [AppPallete.gradient1, AppPallete.gradient2],
@@ -480,13 +445,5 @@ class _ChatPageState extends State<ChatPage> {
           style: TextStyle(color: Colors.white),
         );
     }
-  }
-
-  void navigateToShowSentImage(String imagePath) {
-    Navigator.pushNamed(
-      context,
-      '/show-image',
-      arguments: imagePath,
-    );
   }
 }

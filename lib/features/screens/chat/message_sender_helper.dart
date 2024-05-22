@@ -1,5 +1,6 @@
 import 'package:blog/authentication.dart';
 import 'package:blog/features/models/message.dart';
+import 'package:blog/features/screens/chat/chat_service.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -10,6 +11,7 @@ import 'package:blog/secrets/fcm_server_key.dart';
 
 class MessageHelper {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ChatService _chatService = ChatService();
   Future<void> _sendNotification(String receiverId, String message) async {
     try {
       DocumentSnapshot userDoc = await _firestore
@@ -131,7 +133,9 @@ class MessageHelper {
         'unread': true,
         'type': "image",
         'senderName': senderDetails['username'],
+        'senderUserId': senderDetails['user_id'],
         'receiverName': receiverDetails['username'],
+        'receiverUserId': receiverDetails['user_id'],
       });
       await _sendNotification(receiverId, 'Image');
     } catch (e) {
@@ -182,7 +186,9 @@ class MessageHelper {
         'unread': true,
         'type': 'audio',
         'senderName': senderDetails['username'],
+        'senderUserId': senderDetails['user_id'],
         'receiverName': receiverDetails['username'],
+        'receiverUserId': receiverDetails['user_id'],
       });
       await _sendNotification(receiverId, 'Audio');
     } catch (e) {
@@ -233,7 +239,9 @@ class MessageHelper {
         'unread': true,
         'type': 'video',
         'senderName': senderDetails['username'],
+        'senderUserId': senderDetails['user_id'],
         'receiverName': receiverDetails['username'],
+        'receiverUserId': receiverDetails['user_id'],
       });
       await _sendNotification(receiverId, 'Video');
     } catch (e) {
@@ -284,7 +292,9 @@ class MessageHelper {
         'unread': true,
         'type': 'document',
         'senderName': senderDetails['username'],
+        'senderUserId': senderDetails['user_id'],
         'receiverName': receiverDetails['username'],
+        'receiverUserId': receiverDetails['user_id'],
       });
       await _sendNotification(receiverId, 'Document');
     } catch (e) {

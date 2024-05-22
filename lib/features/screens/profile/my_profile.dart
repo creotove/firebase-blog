@@ -157,9 +157,9 @@ class _MyProfilePageState extends State<MyProfilePage> {
       if (user['avatar'] != null && user['avatar'].isNotEmpty) {
         try {
           await FirebaseStorage.instance.refFromURL(user['avatar']).delete();
-          print('Old image deleted');
         } catch (e) {
           print('Error deleting old image: $e');
+          throw e;
         }
       }
 
