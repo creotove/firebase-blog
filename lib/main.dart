@@ -177,7 +177,10 @@ class _MyAppState extends State<MyApp> {
         '/chat': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as String;
           if (widget.authBloc.isAuthenticated()) {
-            return ChatPage(authBloc: widget.authBloc, receiverUserId: args);
+            return ChatPage(
+              authBloc: widget.authBloc,
+              receiverUserId: args,
+            );
           } else {
             return SignInPage(authBloc: widget.authBloc);
           }

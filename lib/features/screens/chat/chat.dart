@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print, use_rethrow_when_possible
-
 import 'package:blog/features/screens/chat/chat_service.dart';
 import 'package:blog/features/screens/chat/argument_helper.dart.dart';
 import 'package:blog/theme/app_pallete.dart';
@@ -7,6 +5,7 @@ import 'package:blog/utils/encryption_helper.dart';
 import 'package:blog/widgets/audio_player.dart';
 import 'package:blog/widgets/chat_send_file.dart';
 import 'package:blog/widgets/text_filed.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
@@ -30,23 +29,23 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ChatService _chatService = ChatService();
-  final Set _selectedMessages = {};
+  final ValueNotifier<Set<String>> _selectedMessages =
+      ValueNotifier<Set<String>>({});
   bool _selectionMode = false;
 
   void _onMessageLongPress(String messageId) {
-    setState(() {
-      _selectionMode = true;
-      if (_selectedMessages.contains(messageId)) {
-        if (_selectedMessages.length == 1) {
-          _selectionMode = false;
-          _selectedMessages.clear();
-          return;
-        }
-        _selectedMessages.remove(messageId);
-      } else {
-        _selectedMessages.add(messageId);
+    final currentSelection = _selectedMessages.value;
+    if (currentSelection.contains(messageId)) {
+      if (currentSelection.length == 1) {
+        _selectionMode = false;
+        _selectedMessages.value = {};
+        return;
       }
-    });
+      _selectedMessages.value = Set.from(currentSelection)..remove(messageId);
+    } else {
+      _selectedMessages.value = Set.from(currentSelection)..add(messageId);
+      _selectionMode = true;
+    }
   }
 
   Future<void> toggleLike(String messageId) async {
@@ -130,41 +129,49 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: const Text("Chat"),
         actions: [
-          if (_selectionMode)
-            IconButton(
-              icon: const Icon(Icons.cancel),
-              onPressed: () {
-                setState(() {
-                  _selectionMode = false;
-                  _selectedMessages.clear();
-                });
-              },
-            ),
-          if (_selectionMode)
-            IconButton(
-                icon: const Icon(
-                  Icons.delete,
-                  color: Colors.red,
-                ),
-                onPressed: () async {
-                  final deleted = await _chatService.deleteSelectedMessages(
-                      widget.currentUserId!,
-                      widget.receiverUserId,
-                      _selectedMessages);
-                  if (deleted) {
-                    setState(() {
+          ValueListenableBuilder<Set<String>>(
+            valueListenable: _selectedMessages,
+            builder: (context, selectedMessages, child) {
+              if (selectedMessages.isEmpty) {
+                return Container();
+              }
+              print('Selected messages: $selectedMessages');
+              return Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.cancel),
+                    onPressed: () {
                       _selectionMode = false;
-                      _selectedMessages.clear();
-                    });
-                  } else {
-                    print('Failed to delete messages');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Failed to delete messages'),
-                      ),
-                    );
-                  }
-                }),
+                      _selectedMessages.value = {};
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
+                    onPressed: () async {
+                      final deleted = await _chatService.deleteSelectedMessages(
+                          widget.currentUserId!,
+                          widget.receiverUserId,
+                          selectedMessages);
+                      if (deleted) {
+                        _selectionMode = false;
+                        _selectedMessages.value = {};
+                      } else {
+                        print('Failed to delete messages');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to delete messages'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
       body: Column(
@@ -270,7 +277,12 @@ class _ChatPageState extends State<ChatPage> {
             reverse: true,
             itemCount: messages.length,
             itemBuilder: (context, index) {
-              return _buildMessageItem(messages[index]);
+              return ValueListenableBuilder<Set<String>>(
+                valueListenable: _selectedMessages,
+                builder: (context, selectedMessages, child) {
+                  return _buildMessageItem(messages[index], selectedMessages);
+                },
+              );
             },
           );
         }
@@ -278,7 +290,8 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildMessageItem(DocumentSnapshot document) {
+  Widget _buildMessageItem(
+      DocumentSnapshot document, Set<String> selectedMessages) {
     Map<String, dynamic> message = document.data() as Map<String, dynamic>;
     final messageId = document.id;
     final isMe = message['senderId'] == widget.currentUserId;
@@ -287,7 +300,7 @@ class _ChatPageState extends State<ChatPage> {
         : message['message'];
     final messageType = message['type'];
     final isLiked = isMessageLiked(message);
-    final isMessageSelected = _selectedMessages.contains(messageId);
+    final isMessageSelected = selectedMessages.contains(messageId);
 
     return GestureDetector(
       onTap: () {
@@ -395,22 +408,18 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
-              child: Image.network(
-                message['imageUrl'],
+              child: CachedNetworkImage(
+                imageUrl: message['imageUrl'],
                 height: 200.0,
                 width: 200.0,
-                loadingBuilder: (BuildContext context, Widget child,
-                    ImageChunkEvent? loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                    ),
-                  );
-                },
+                progressIndicatorBuilder: (context, url, downloadProgress) =>
+                    SizedBox(
+                  height: 50.0,
+                  width: 50.0,
+                  child: CircularProgressIndicator(
+                      value: downloadProgress.progress),
+                ),
+                errorWidget: (context, url, error) => Icon(Icons.error),
               ),
             ),
           ],

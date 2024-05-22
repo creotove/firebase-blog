@@ -96,7 +96,6 @@ class ChatService {
             'timestamp': chatRoom['timestamp'].toDate(),
           });
         }
-        print(chatRooms);
         return chatRooms;
       });
     } catch (e) {
@@ -111,6 +110,7 @@ class ChatService {
       List<String> ids = [senderUserId, receiverUserId];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
+      print(selectedMessages);
 
       for (var messageId in selectedMessages) {
         await FirebaseFirestore.instance
@@ -122,12 +122,8 @@ class ChatService {
             .then((value) {
           isDeleted = true;
         });
-        if (!isDeleted) {
-          return false;
-        }
-        return isDeleted;
+        print(messageId);
       }
-
       return isDeleted;
     } catch (e) {
       print(e);

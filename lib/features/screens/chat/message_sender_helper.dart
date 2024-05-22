@@ -1,6 +1,7 @@
+// ignore_for_file: avoid_print
+
 import 'package:blog/authentication.dart';
 import 'package:blog/features/models/message.dart';
-import 'package:blog/features/screens/chat/chat_service.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -11,7 +12,6 @@ import 'package:blog/secrets/fcm_server_key.dart';
 
 class MessageHelper {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final ChatService _chatService = ChatService();
   Future<void> _sendNotification(String receiverId, String message) async {
     try {
       DocumentSnapshot userDoc = await _firestore

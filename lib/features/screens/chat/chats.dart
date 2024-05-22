@@ -10,7 +10,7 @@ import 'package:timeago/timeago.dart' as timeago;
 class ChatsPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
 
-  const ChatsPage({Key? key, required this.authBloc}) : super(key: key);
+  const ChatsPage({super.key, required this.authBloc});
 
   @override
   _ChatsPageState createState() => _ChatsPageState();
