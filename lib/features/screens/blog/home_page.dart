@@ -9,6 +9,7 @@ import 'package:blog/utils/date_time_formatter.dart';
 import 'package:blog/utils/redirect_profile_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:blog/utils/calculate_reading_time.dart';
 
 class HomePage extends StatefulWidget {
   final AuthenticationBloc authBloc;
@@ -155,6 +156,11 @@ class BlogListPage extends StatelessWidget {
                             Text(
                               dateTimeFormatterTimeStamp(blog['created_at']),
                               style: const TextStyle(fontSize: 12),
+                            ),
+                            Text(
+                              '${calculateReadingTime(blog['content'])} min read',
+                              style: const TextStyle(
+                                  fontSize: 12, color: AppPallete.gradient2),
                             ),
                           ],
                         ),

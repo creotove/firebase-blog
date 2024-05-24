@@ -1,29 +1,5 @@
-// import 'dart:io';
+// ignore_for_file: file_names, library_private_types_in_public_api, use_build_context_synchronously
 
-// import 'package:blog/authentication.dart';
-// import 'package:flutter/material.dart';
-
-// class SendDocument extends StatelessWidget {
-//   final File document;
-//   final AuthenticationBloc authBloc;
-//   final String? receiverUserId;
-//   final String? currentUserId;
-
-//   const SendDocument({
-//     super.key,
-//     required this.document,
-//     required this.authBloc,
-//     this.receiverUserId,
-//     this.currentUserId,
-//   });
-
-// ignore_for_file: prefer_const_constructors
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return const Placeholder();
-//   }
-// }
 import 'dart:io';
 
 import 'package:blog/features/screens/chat/message_sender_helper.dart';
@@ -81,7 +57,7 @@ class _SendDocumentState extends State<SendDocument> {
             padding: const EdgeInsets.all(16.0),
             child: Text(
               widget.document.path.split('/').last,
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
           ),
         ],

@@ -6,7 +6,7 @@ class ChatSendFile extends StatelessWidget {
   final String text;
   final void Function()? onPressed;
 
-  ChatSendFile(
+  const ChatSendFile(
       {super.key,
       required this.icon,
       required this.text,

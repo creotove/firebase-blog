@@ -108,48 +108,11 @@ class ChatService {
     }
   }
 
-  // Future<bool> deleteSelectedMessages(String senderUserId,
-  //     String receiverUserId, Set<String> selectedMessages) async {
-  //   try {
-  //     List<String> ids = [senderUserId, receiverUserId];
-  //     ids.sort();
-  //     String chatRoomId = '${ids[0]}_${ids[1]}';
-
-  //     bool allDeleted = true;
-
-  //     var messagesCollection = FirebaseFirestore.instance
-  //         .collection('chatRooms')
-  //         .doc(chatRoomId)
-  //         .collection('messages');
-
-  //     var messagesSnapshot = await messagesCollection
-  //         .where(FieldPath.documentId, whereIn: selectedMessages.toList())
-  //         .get();
-
-  //     if (messagesSnapshot.docs.any((doc) => doc['senderId'] != senderUserId)) {
-  //       print('Error: User can only delete their own messages');
-  //       return false;
-  //     }
-
-  //     await FirebaseFirestore.instance.runTransaction((transaction) async {
-  //       for (var messageDoc in messagesSnapshot.docs) {
-  //         transaction.update(messageDoc.reference, {'isDeletedBySender': true});
-  //       }
-  //     });
-
-  //     print('All messages marked as deleted by sender: $allDeleted');
-  //     return allDeleted;
-  //   } catch (e) {
-  //     print('Error in deleteSelectedMessages: $e');
-  //     return false;
-  //   }
-  // }
-
   Future<bool> deleteSelectedMessages(String currentUserId,
       String receiverUserId, Set<String> selectedMessages) async {
     try {
       final List<String> users = [currentUserId, receiverUserId]..sort();
-      final String chatRoomId = users[0] + '_' + users[1];
+      final String chatRoomId = '${users[0]}_${users[1]}';
 
       final batch = FirebaseFirestore.instance.batch();
 
@@ -208,6 +171,14 @@ class ChatService {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       return File(pickedFile.path);
+    }
+    return null;
+  }
+
+  Future<File?> pickVideo() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.video);
+    if (result != null) {
+      return File(result.files.single.path!);
     }
     return null;
   }

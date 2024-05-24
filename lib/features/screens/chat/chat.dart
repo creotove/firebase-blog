@@ -1,13 +1,11 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, use_build_context_synchronously
 
-import 'package:blog/features/screens/chat/chat_service.dart';
+import 'package:blog/utils/chat_service.dart';
 import 'package:blog/features/screens/chat/argument_helper.dart.dart';
-import 'package:blog/theme/app_pallete.dart';
 import 'package:blog/utils/encryption_helper.dart';
-import 'package:blog/widgets/audio_player.dart';
+import 'package:blog/widgets/build_message_content.dart';
 import 'package:blog/widgets/chat_send_file.dart';
 import 'package:blog/widgets/text_filed.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
@@ -36,7 +34,16 @@ class _ChatPageState extends State<ChatPage> {
       ValueNotifier<Set<String>>({});
   bool _selectionMode = false;
 
-  void _onMessageLongPress(String messageId) {
+  void _onMessageLongPress(
+    String messageId,
+    bool isDeletedByReceiver,
+    bool isDeletedBySender,
+  ) {
+    // If the message is deleted by the sender or receiver, do not allow selection
+    if (isDeletedBySender || isDeletedByReceiver) {
+      return;
+    }
+
     final currentSelection = _selectedMessages.value;
     if (currentSelection.contains(messageId)) {
       if (currentSelection.length == 1) {
@@ -129,6 +136,28 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  void _pickVideo() async {
+    final pickedVideo = await _chatService.pickVideo();
+    if (pickedVideo != null) {
+      final arguments = SendVideoArguments(
+        video: pickedVideo,
+        currentUserId: widget.currentUserId,
+        receiverUserId: widget.receiverUserId,
+      );
+      await Navigator.pushNamed(
+        context,
+        '/send-video',
+        arguments: arguments,
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchReceiverDetails() async {
+    final userDetails =
+        await widget.authBloc.getUserDetailsById(widget.receiverUserId);
+    return userDetails;
+  }
+
   Future<String> getCurrentUser() async {
     final userDetails = await widget.authBloc.getUserDetails();
     if (userDetails.isEmpty) {
@@ -143,7 +172,38 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Chat"),
+        title: FutureBuilder<Map<String, dynamic>>(
+          future: fetchReceiverDetails(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Text('Loading...', style: TextStyle(fontSize: 16));
+            } else if (snapshot.hasError) {
+              return const Text('Error');
+            } else {
+              final receiverDetails = snapshot.data!;
+              final receiverName = receiverDetails['username'];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/user-profile',
+                    arguments: receiverDetails['user_id'],
+                  );
+                },
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: NetworkImage(receiverDetails['avatar'] ??
+                          'https://www.w3schools.com/howto/img_avatar.png'),
+                    ),
+                    const SizedBox(width: 8.0),
+                    Text(receiverName),
+                  ],
+                ),
+              );
+            }
+          },
+        ),
         actions: [
           ValueListenableBuilder<Set<String>>(
             valueListenable: _selectedMessages,
@@ -244,6 +304,14 @@ class _ChatPageState extends State<ChatPage> {
                                     _pickDocument();
                                   },
                                 ),
+                                ChatSendFile(
+                                  icon: Icons.video_library,
+                                  text: "Video",
+                                  onPressed: () async {
+                                    Navigator.pop(context);
+                                    _pickVideo();
+                                  },
+                                ),
                               ],
                             ),
                           ),
@@ -319,7 +387,11 @@ class _ChatPageState extends State<ChatPage> {
     return GestureDetector(
       onTap: () async {
         if (_selectionMode) {
-          _onMessageLongPress(document.id);
+          _onMessageLongPress(
+            document.id,
+            message['isDeletedByReceiver'],
+            message['isDeletedBySender'],
+          );
         } else if (messageType == "image") {
           Navigator.pushNamed(
             context,
@@ -350,7 +422,11 @@ class _ChatPageState extends State<ChatPage> {
         await toggleLike(document.id);
       },
       onLongPress: () {
-        _onMessageLongPress(document.id);
+        _onMessageLongPress(
+          document.id,
+          message['isDeletedByReceiver'],
+          message['isDeletedBySender'],
+        );
       },
       child: Container(
         width: double.infinity,
@@ -369,13 +445,13 @@ class _ChatPageState extends State<ChatPage> {
               crossAxisAlignment:
                   isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                _buildMessageContent(
-                  isMe,
-                  messageType,
-                  decryptedMessage,
-                  message,
-                  message['isDeletedBySender'],
-                  message['isDeletedByReceiver'],
+                BuildMessageContent(
+                  isMe: isMe,
+                  messageType: messageType,
+                  decryptedMessage: decryptedMessage,
+                  message: message,
+                  isDeletedBySender: message['isDeletedBySender'],
+                  isDeletedByReceiver: message['isDeletedByReceiver'],
                 ),
                 if (isLiked)
                   Container(
@@ -410,194 +486,5 @@ class _ChatPageState extends State<ChatPage> {
         ),
       ),
     );
-  }
-
-  Widget _buildMessageContent(
-    bool isMe,
-    String messageType,
-    String decryptedMessage,
-    Map<String, dynamic> message,
-    bool isDeletedBySender,
-    bool isDeletedByReceiver,
-  ) {
-    switch (messageType) {
-      case "text":
-        return Builder(
-          builder: (context) {
-            if (isDeletedBySender && isMe) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  gradient: isMe
-                      ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'You deleted this message',
-                  style: TextStyle(color: Colors.white),
-                ),
-              );
-            } else if (isDeletedBySender && !isMe) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  gradient: isMe
-                      ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'This message was deleted',
-                  style: TextStyle(color: Colors.white),
-                ),
-              );
-            } else if (isDeletedByReceiver && isMe) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  gradient: isMe
-                      ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  decryptedMessage,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              );
-            } else if (isDeletedByReceiver && !isMe) {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  gradient: isMe
-                      ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'You deleted this message',
-                  style: TextStyle(color: Colors.white),
-                ),
-              );
-            } else {
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  gradient: isMe
-                      ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  decryptedMessage,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              );
-            }
-          },
-        );
-      case "image":
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: CachedNetworkImage(
-                imageUrl: message['imageUrl'],
-                height: 200.0,
-                width: 200.0,
-                progressIndicatorBuilder: (context, url, downloadProgress) =>
-                    SizedBox(
-                  height: 50.0,
-                  width: 50.0,
-                  child: CircularProgressIndicator(
-                      value: downloadProgress.progress),
-                ),
-                errorWidget: (context, url, error) => Icon(Icons.error),
-              ),
-            ),
-          ],
-        );
-      case "audio":
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            gradient: isMe
-                ? const LinearGradient(
-                    colors: [AppPallete.gradient1, AppPallete.gradient2],
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          padding: const EdgeInsets.all(8.0),
-          width: 200,
-          child: CompactAudioPlayerWidget(audioUrl: message['audioUrl']),
-        );
-      case "document":
-        return Container(
-          width: 100,
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            gradient: isMe
-                ? const LinearGradient(
-                    colors: [AppPallete.gradient1, AppPallete.gradient2],
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          padding: const EdgeInsets.all(8.0),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(Icons.insert_drive_file, color: Colors.white),
-              Text(
-                'Document',
-                style: TextStyle(color: Colors.white),
-              ),
-            ],
-          ),
-        );
-      default:
-        return const Text(
-          'File corrupted or not supported',
-          style: TextStyle(color: Colors.white),
-        );
-    }
   }
 }

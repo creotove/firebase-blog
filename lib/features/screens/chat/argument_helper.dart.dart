@@ -38,6 +38,18 @@ class SendDocumentArguments {
   });
 }
 
+class SendVideoArguments {
+  final File video;
+  final String? currentUserId;
+  final String? receiverUserId;
+
+  SendVideoArguments({
+    required this.video,
+    this.currentUserId,
+    this.receiverUserId,
+  });
+}
+
 class MessageNotificationArgs {
   final String receiverUserId;
   final String senderUserId;

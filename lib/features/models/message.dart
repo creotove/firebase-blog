@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Model for the messages
 enum MessageType {
   text,
   image,
@@ -38,6 +39,7 @@ class Messages {
     this.isEncrypted = false,
   });
 
+  // Convert the message to a map. This will be used to store the message in the Firestore
   Map<String, dynamic> toMap() {
     return {
       'message': message,

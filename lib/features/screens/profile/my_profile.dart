@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print
+// ignore_for_file: use_build_context_synchronously, avoid_print, use_rethrow_when_possible
 
 import 'dart:io';
 import 'package:blog/features/screens/profile/edit_profile.dart';

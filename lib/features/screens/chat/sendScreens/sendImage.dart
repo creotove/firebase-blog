@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print, library_private_types_in_public_api, file_names
+
 import 'dart:io';
 
 import 'package:blog/features/screens/chat/message_sender_helper.dart';

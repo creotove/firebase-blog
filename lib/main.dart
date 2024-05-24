@@ -13,6 +13,7 @@ import 'package:blog/features/screens/chat/sendScreens/sendAudio.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendDocument.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendImage.dart';
 import 'package:blog/features/screens/chat/argument_helper.dart.dart';
+import 'package:blog/features/screens/chat/sendScreens/sendVideo.dart';
 import 'package:blog/features/screens/chat/show_send_image.dart';
 import 'package:blog/features/screens/profile/edit_profile.dart';
 import 'package:blog/features/screens/profile/my_blogs.dart';
@@ -29,10 +30,12 @@ import 'package:blog/authentication.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
+    // Initialize the Firebase app
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
 
     final authBloc = AuthenticationBloc();
+    // Run the app with the AuthenticationBloc
     runApp(MyApp(authBloc: authBloc));
   } catch (e) {
     print(e);
@@ -48,12 +51,16 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  // Route observer for route changes
   final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+  // Initialize the dynamic links
   void initDynamicLinks(BuildContext context) async {
     try {
+      // Listen for the dynamic links
       FirebaseDynamicLinks.instance.onLink.listen((dynamicLink) {
         final Uri deepLink = dynamicLink.link;
         var isBlog = deepLink.pathSegments.contains('blog-view');
+        // If the deep link is for the blog view then redirect it to the blog view page
         if (isBlog) {
           final queryParams = deepLink.queryParameters;
           if (queryParams.containsKey('blogId')) {
@@ -67,8 +74,10 @@ class _MyAppState extends State<MyApp> {
       print(e);
     }
     try {
+      // Get the initial link
       final PendingDynamicLinkData? data =
           await FirebaseDynamicLinks.instance.getInitialLink();
+      // If the deep link is for the blog view then redirect it to the blog view page
       final Uri? deepLink = data?.link;
       if (deepLink != null) {
         var isBlog = deepLink.pathSegments.contains('blog-view');
@@ -90,6 +99,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    // Add a post frame callback to initialize the dynamic links
     WidgetsBinding.instance.addPostFrameCallback((_) {
       initDynamicLinks(context);
     });
@@ -98,12 +108,16 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      // Hide the debug banner
       debugShowCheckedModeBanner: false,
       title: 'Blog App',
       theme: AppTheme.darkThemeMode,
+      // Set the navigator key for the context utility service
       navigatorKey: ContextUtilityService.navigatorKey,
+      // Set the route observer
       navigatorObservers: [routeObserver],
       initialRoute: '/signup',
+      // All the registered routes in the app
       routes: {
         '/': (context) {
           if (widget.authBloc.isAuthenticated()) {
@@ -170,6 +184,16 @@ class _MyAppState extends State<MyApp> {
           return SendDocument(
             authBloc: widget.authBloc,
             document: args.document,
+            currentUserId: args.currentUserId,
+            receiverUserId: args.receiverUserId,
+          );
+        },
+        '/send-video': (context) {
+          final args =
+              ModalRoute.of(context)!.settings.arguments as SendVideoArguments;
+          return SendVideo(
+            authBloc: widget.authBloc,
+            document: args.video,
             currentUserId: args.currentUserId,
             receiverUserId: args.receiverUserId,
           );

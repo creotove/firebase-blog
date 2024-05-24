@@ -1,8 +1,7 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, use_rethrow_when_possible
 
 import 'package:blog/authentication.dart';
 import 'package:blog/features/models/message.dart';
-import 'package:blog/features/screens/chat/argument_helper.dart.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -99,7 +98,7 @@ class MessageHelper {
   }
 
   Future<void> sendImageMessage(
-    File? _image,
+    File? image,
     String senderId,
     String receiverId,
   ) async {
@@ -107,7 +106,7 @@ class MessageHelper {
       Reference ref = FirebaseStorage.instance
           .ref()
           .child('chat_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
-      UploadTask uploadTask = ref.putFile(_image!);
+      UploadTask uploadTask = ref.putFile(image!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String imageUrl = await taskSnapshot.ref.getDownloadURL();
       Messages newMsg = Messages(
@@ -152,7 +151,7 @@ class MessageHelper {
   }
 
   Future<void> sendAudioMessage(
-    File? _audio,
+    File? audio,
     String senderId,
     String receiverId,
   ) async {
@@ -160,7 +159,7 @@ class MessageHelper {
       Reference ref = FirebaseStorage.instance
           .ref()
           .child('chat_audios/${DateTime.now().millisecondsSinceEpoch}.mp3');
-      UploadTask uploadTask = ref.putFile(_audio!);
+      UploadTask uploadTask = ref.putFile(audio!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String audioUrl = await taskSnapshot.ref.getDownloadURL();
       Messages newMsg = Messages(
@@ -205,7 +204,7 @@ class MessageHelper {
   }
 
   Future<void> sendVideoMessage(
-    File? _video,
+    File? video,
     String senderId,
     String receiverId,
   ) async {
@@ -213,7 +212,7 @@ class MessageHelper {
       Reference ref = FirebaseStorage.instance
           .ref()
           .child('chat_videos/${DateTime.now().millisecondsSinceEpoch}.mp4');
-      UploadTask uploadTask = ref.putFile(_video!);
+      UploadTask uploadTask = ref.putFile(video!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String videoUrl = await taskSnapshot.ref.getDownloadURL();
       Messages newMsg = Messages(
@@ -258,7 +257,7 @@ class MessageHelper {
   }
 
   Future<void> sendDocumentMessage(
-    File? _document,
+    File? document,
     String senderId,
     String receiverId,
   ) async {
@@ -266,7 +265,7 @@ class MessageHelper {
       Reference ref = FirebaseStorage.instance
           .ref()
           .child('chat_documents/${DateTime.now().millisecondsSinceEpoch}.pdf');
-      UploadTask uploadTask = ref.putFile(_document!);
+      UploadTask uploadTask = ref.putFile(document!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String documentUrl = await taskSnapshot.ref.getDownloadURL();
       Messages newMsg = Messages(
