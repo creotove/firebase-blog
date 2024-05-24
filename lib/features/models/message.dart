@@ -53,8 +53,8 @@ class Messages {
       'likedBy': likedBy,
       'type': type.toString().split('.').last,
       'isEncrypted': isEncrypted,
-      'isDeltedBySender': isDeltedBySender,
-      'isDeltedByReceiver': isDeltedByReceiver,
+      'isDeletedBySender': isDeltedBySender,
+      'isDeletedByReceiver': isDeltedByReceiver,
     };
   }
 }

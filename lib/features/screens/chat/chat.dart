@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:blog/features/screens/chat/chat_service.dart';
 import 'package:blog/features/screens/chat/argument_helper.dart.dart';
 import 'package:blog/theme/app_pallete.dart';
@@ -172,7 +174,6 @@ class _ChatPageState extends State<ChatPage> {
                         _selectionMode = false;
                         _selectedMessages.value = {};
                       } else {
-                        print('Failed to delete messages');
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Failed to delete messages'),
@@ -361,7 +362,6 @@ class _ChatPageState extends State<ChatPage> {
         child: Align(
           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -370,7 +370,13 @@ class _ChatPageState extends State<ChatPage> {
                   isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 _buildMessageContent(
-                    isMe, messageType, decryptedMessage, message),
+                  isMe,
+                  messageType,
+                  decryptedMessage,
+                  message,
+                  message['isDeletedBySender'],
+                  message['isDeletedByReceiver'],
+                ),
                 if (isLiked)
                   Container(
                     padding: const EdgeInsets.all(5.0),
@@ -411,27 +417,120 @@ class _ChatPageState extends State<ChatPage> {
     String messageType,
     String decryptedMessage,
     Map<String, dynamic> message,
+    bool isDeletedBySender,
+    bool isDeletedByReceiver,
   ) {
     switch (messageType) {
       case "text":
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16.0,
-            vertical: 8.0,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            gradient: isMe
-                ? const LinearGradient(
-                    colors: [AppPallete.gradient1, AppPallete.gradient2],
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            decryptedMessage,
-            style: const TextStyle(color: Colors.white),
-          ),
+        return Builder(
+          builder: (context) {
+            if (isDeletedBySender && isMe) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'You deleted this message',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            } else if (isDeletedBySender && !isMe) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'This message was deleted',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            } else if (isDeletedByReceiver && isMe) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  decryptedMessage,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              );
+            } else if (isDeletedByReceiver && !isMe) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'You deleted this message',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            } else {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  decryptedMessage,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              );
+            }
+          },
         );
       case "image":
         return Column(
@@ -471,30 +570,6 @@ class _ChatPageState extends State<ChatPage> {
           child: CompactAudioPlayerWidget(audioUrl: message['audioUrl']),
         );
       case "document":
-        // return GestureDetector(
-        //   onTap: () async {
-        //     if (_selectionMode) {
-        //       return;
-        //     }
-        //     final documentUrl = message['documentUrl'];
-        //     if (documentUrl != null) {
-        //       try {
-        //         if (await canLaunchUrl(Uri.parse(documentUrl))) {
-        //           await launchUrl(Uri.parse(documentUrl));
-        //         } else {
-        //           throw 'Could not launch $documentUrl';
-        //         }
-        //       } catch (e) {
-        //         print('Error opening document: $e');
-        //         ScaffoldMessenger.of(context).showSnackBar(
-        //           const SnackBar(
-        //             content: Text('Failed to open document'),
-        //           ),
-        //         );
-        //       }
-        //     }
-        //   },
-        //   child:
         return Container(
           width: 100,
           decoration: BoxDecoration(
@@ -518,7 +593,6 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
         );
-      // );
       default:
         return const Text(
           'File corrupted or not supported',

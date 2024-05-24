@@ -61,24 +61,28 @@ class FirebaseApi {
   }
 
   void handleMessage(RemoteMessage message) async {
-    if (message.data.isEmpty) return;
-    final route = message.data['route'];
-    final receiverUserId = await AuthenticationBloc().getCurrentUserId();
-    final senderUserId = message.data['senderUserId'];
-    final myArgs = MessageNotificationArgs(
-      receiverUserId: senderUserId,
-      senderUserId: receiverUserId.toString(),
-      route: route,
-      authBloc: AuthenticationBloc(),
-    );
-    print("=================================");
-    print("receiverUserId: $receiverUserId");
-    print("senderUserId: $senderUserId");
-    print("route: $route");
+    try {
+      if (message.data.isEmpty) {
+        print('=================================');
+        print('No data in message');
+        return;
+      }
+      final route = message.data['route'];
+      final receiverUserId = await AuthenticationBloc().getCurrentUserId();
+      final senderUserId = message.data['senderUserId'];
+      final myArgs = MessageNotificationArgs(
+        receiverUserId: senderUserId,
+        senderUserId: receiverUserId.toString(),
+        route: route,
+        authBloc: AuthenticationBloc(),
+      );
 
-    if (route == '/chat' && receiverUserId != null) {
-      ContextUtilityService.navigatorKey.currentState
-          ?.pushNamed(route, arguments: myArgs);
+      if (route == '/chat' && receiverUserId != null) {
+        ContextUtilityService.navigatorKey.currentState
+            ?.pushNamed(route, arguments: myArgs);
+      }
+    } catch (e) {
+      print(e);
     }
   }
 

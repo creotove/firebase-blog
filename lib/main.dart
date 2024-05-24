@@ -1,6 +1,5 @@
 // ignore_for_file: avoid_print
 
-import 'package:blog/api/firebase_api.dart';
 import 'package:blog/features/screens/blog/add_blog_page.dart';
 import 'package:blog/features/screens/blog/blog_edit.dart';
 import 'package:blog/features/screens/blog/blog_view_page.dart';
@@ -104,7 +103,7 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.darkThemeMode,
       navigatorKey: ContextUtilityService.navigatorKey,
       navigatorObservers: [routeObserver],
-      initialRoute: '/',
+      initialRoute: '/signup',
       routes: {
         '/': (context) {
           if (widget.authBloc.isAuthenticated()) {
@@ -124,7 +123,13 @@ class _MyAppState extends State<MyApp> {
         '/chats': (context) => ChatsPage(authBloc: widget.authBloc),
         '/edit-profile': (context) =>
             EditProfilePage(authBloc: widget.authBloc),
-        '/signup': (context) => SignUpPage(authBloc: widget.authBloc),
+        '/signup': (context) {
+          if (widget.authBloc.isAuthenticated()) {
+            return HomePage(authBloc: widget.authBloc);
+          } else {
+            return SignUpPage(authBloc: widget.authBloc);
+          }
+        },
         '/signin': (context) => SignInPage(authBloc: widget.authBloc),
         '/my-profile': (context) => MyProfilePage(authBloc: widget.authBloc),
         '/user-profile': (context) {

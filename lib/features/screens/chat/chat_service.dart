@@ -80,8 +80,13 @@ class ChatService {
         for (var doc in snapshot.docs) {
           final chatRoom = doc.data();
 
-          final userDoc = await AuthenticationBloc()
-              .getUserDetailsById(chatRoom['senderUserId']);
+          String otherUserId = chatRoom['senderUserId'] == userLoggedIn
+              ? chatRoom['receiverUserId']
+              : chatRoom['senderUserId'];
+
+          final userDoc =
+              await AuthenticationBloc().getUserDetailsById(otherUserId);
+
           chatRooms.add({
             'chatRoomId': doc.id,
             'senderUserId': chatRoom['senderUserId'],
@@ -103,66 +108,81 @@ class ChatService {
     }
   }
 
-  Future<bool> deleteSelectedMessages(String senderUserId,
+  // Future<bool> deleteSelectedMessages(String senderUserId,
+  //     String receiverUserId, Set<String> selectedMessages) async {
+  //   try {
+  //     List<String> ids = [senderUserId, receiverUserId];
+  //     ids.sort();
+  //     String chatRoomId = '${ids[0]}_${ids[1]}';
+
+  //     bool allDeleted = true;
+
+  //     var messagesCollection = FirebaseFirestore.instance
+  //         .collection('chatRooms')
+  //         .doc(chatRoomId)
+  //         .collection('messages');
+
+  //     var messagesSnapshot = await messagesCollection
+  //         .where(FieldPath.documentId, whereIn: selectedMessages.toList())
+  //         .get();
+
+  //     if (messagesSnapshot.docs.any((doc) => doc['senderId'] != senderUserId)) {
+  //       print('Error: User can only delete their own messages');
+  //       return false;
+  //     }
+
+  //     await FirebaseFirestore.instance.runTransaction((transaction) async {
+  //       for (var messageDoc in messagesSnapshot.docs) {
+  //         transaction.update(messageDoc.reference, {'isDeletedBySender': true});
+  //       }
+  //     });
+
+  //     print('All messages marked as deleted by sender: $allDeleted');
+  //     return allDeleted;
+  //   } catch (e) {
+  //     print('Error in deleteSelectedMessages: $e');
+  //     return false;
+  //   }
+  // }
+
+  Future<bool> deleteSelectedMessages(String currentUserId,
       String receiverUserId, Set<String> selectedMessages) async {
     try {
-      List<String> ids = [senderUserId, receiverUserId];
-      ids.sort();
-      String chatRoomId = '${ids[0]}_${ids[1]}';
+      final List<String> users = [currentUserId, receiverUserId]..sort();
+      final String chatRoomId = users[0] + '_' + users[1];
 
-      bool allDeleted = true;
+      final batch = FirebaseFirestore.instance.batch();
 
-      // Fetch messages to verify ownership and for updating last message
-      var messagesCollection = FirebaseFirestore.instance
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .collection('messages');
+      for (final messageId in selectedMessages) {
+        final messageRef = FirebaseFirestore.instance
+            .collection('chatRooms')
+            .doc(chatRoomId)
+            .collection('messages')
+            .doc(messageId);
 
-      var messagesSnapshot = await messagesCollection
-          .where(FieldPath.documentId, whereIn: selectedMessages.toList())
-          .get();
+        final messageSnapshot = await messageRef.get();
+        if (messageSnapshot.exists) {
+          final messageData = messageSnapshot.data() as Map<String, dynamic>;
 
-      if (messagesSnapshot.docs.any((doc) => doc['senderId'] != senderUserId)) {
-        // If any message is not sent by the sender, deny deletion
-        print('Error: User can only delete their own messages');
-        return false;
-      }
+          // Determine if the current user is the sender or receiver of the message
+          final bool isSender = messageData['senderId'] == currentUserId;
 
-      // Delete messages in a transaction
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        for (var messageDoc in messagesSnapshot.docs) {
-          transaction.delete(messageDoc.reference);
+          if (isSender && currentUserId == receiverUserId) {
+            batch.update(messageRef, {'isDeletedBySender': true});
+          } else if (!isSender && currentUserId == receiverUserId) {
+            batch.update(messageRef, {'isDeletedByReceiver': true});
+          } else if (isSender && currentUserId != receiverUserId) {
+            batch.update(messageRef, {'isDeletedBySender': true});
+          } else if (!isSender && currentUserId != receiverUserId) {
+            batch.update(messageRef, {'isDeletedByReceiver': true});
+          }
         }
-      });
-
-      // Check and update the last message in chat room
-      var lastMessageSnapshot = await messagesCollection
-          .orderBy('timestamp', descending: true)
-          .limit(1)
-          .get();
-
-      if (lastMessageSnapshot.docs.isNotEmpty) {
-        var lastMessageData = lastMessageSnapshot.docs.first.data();
-        await FirebaseFirestore.instance
-            .collection('chatRooms')
-            .doc(chatRoomId)
-            .update({
-          'lastMessage': lastMessageData,
-        });
-      } else {
-        // If no messages left, update last message field to null
-        await FirebaseFirestore.instance
-            .collection('chatRooms')
-            .doc(chatRoomId)
-            .update({
-          'lastMessage': null,
-        });
       }
 
-      print('All messages deleted: $allDeleted');
-      return allDeleted;
+      await batch.commit();
+      return true;
     } catch (e) {
-      print('Error in deleteSelectedMessages: $e');
+      print('Error deleting messages: $e');
       return false;
     }
   }
