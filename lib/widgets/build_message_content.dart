@@ -514,7 +514,95 @@ class BuildMessageContent extends StatelessWidget {
             }
           },
         );
-
+      case "video":
+        return Builder(
+          builder: (context) {
+            if (isDeletedBySender && isMe) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Wrap(
+                  children: [
+                    Icon(Icons.error, color: Colors.white),
+                    SizedBox(width: 5),
+                    Text(
+                      'You deleted this message',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              );
+            } else if (isDeletedBySender && !isMe) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'This message was deleted',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            } else if (isDeletedByReceiver && isMe) {
+              return Container(
+                child: MyVideoPlayer(videoUrl: message['videoUrl']),
+              );
+            } else if (isDeletedByReceiver && !isMe) {
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  gradient: isMe
+                      ? const LinearGradient(
+                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                        )
+                      : null,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Wrap(
+                  children: [
+                    Icon(Icons.error, color: Colors.white),
+                    SizedBox(width: 5),
+                    Text(
+                      'You deleted this message',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return Container(
+                child: MyVideoPlayer(videoUrl: message['videoUrl']),
+              );
+            }
+          },
+        );
       default:
         return const Text(
           'File corrupted or not supported',

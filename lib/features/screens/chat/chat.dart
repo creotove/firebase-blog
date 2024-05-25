@@ -381,7 +381,7 @@ class _ChatPageState extends State<ChatPage> {
         ? EncryptionHelper.decryptMessage(message['message'])
         : message['message'];
     final messageType = message['type'];
-    final isLiked = isMessageLiked(message);
+    final likesCount = message['likedBy']?.length ?? 0;
     final isMessageSelected = selectedMessages.contains(messageId);
 
     return GestureDetector(
@@ -453,32 +453,47 @@ class _ChatPageState extends State<ChatPage> {
                   isDeletedBySender: message['isDeletedBySender'],
                   isDeletedByReceiver: message['isDeletedByReceiver'],
                 ),
-                if (isLiked)
+                if (likesCount == 0) const SizedBox(height: 0.0),
+                if (likesCount == 1)
                   Container(
-                    padding: const EdgeInsets.all(5.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(50.0),
-                    ),
-                    child: isMe
-                        ? const Positioned(
-                            bottom: 5.0,
-                            right: 5.0,
-                            child: Icon(
-                              Icons.favorite,
-                              color: Colors.red,
-                              size: 15.0,
-                            ),
-                          )
-                        : const Positioned(
-                            bottom: -5.0,
-                            left: -5.0,
-                            child: Icon(
-                              Icons.favorite,
-                              color: Colors.red,
-                              size: 15.0,
-                            ),
+                      padding: const EdgeInsets.all(5.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(50.0),
+                      ),
+                      child: const Icon(
+                        Icons.favorite,
+                        color: Colors.red,
+                        size: 15.0,
+                      )),
+                if (likesCount > 1)
+                  Stack(
+                    children: [
+                      Container(
+                          padding: const EdgeInsets.all(5.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(50.0),
                           ),
+                          child: const Icon(
+                            Icons.favorite,
+                            color: Colors.red,
+                            size: 15.0,
+                          )),
+                      Container(
+                        margin: const EdgeInsets.only(left: 10.0),
+                        padding: const EdgeInsets.all(5.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(50.0),
+                        ),
+                        child: const Icon(
+                          Icons.favorite,
+                          color: Colors.red,
+                          size: 15.0,
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),

@@ -11,13 +11,8 @@ class MyVideoPlayer extends StatefulWidget {
 class _MyVideoPlayerState extends State<MyVideoPlayer> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Video Player'),
-      ),
-      body: Center(
-        child: Text('Video Player'),
-      ),
+    return Container(
+      child: Text('Video Player'),
     );
   }
 }
