@@ -81,8 +81,7 @@ class _SignUpPageState extends State<SignUpPage> {
           .signUpWithEmailAndPassword(email, password, name)
           .then((_) {
         // Navigate to home page if sign-up is successful
-        Navigator.pushReplacementNamed(context,
-            '/signin'); // Adjust the route name as per your app's navigation setup
+        Navigator.pushReplacementNamed(context, '/signin');
       }).catchError((error) {
         // Handle sign-up error
         showDialog(

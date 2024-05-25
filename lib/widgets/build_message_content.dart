@@ -336,7 +336,11 @@ class BuildMessageContent extends StatelessWidget {
                       : null,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 width: 200,
                 child: CompactAudioPlayerWidget(audioUrl: message['audioUrl']),
               );
@@ -378,7 +382,11 @@ class BuildMessageContent extends StatelessWidget {
                       : null,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 width: 200,
                 child: CompactAudioPlayerWidget(audioUrl: message['audioUrl']),
               );
@@ -448,9 +456,12 @@ class BuildMessageContent extends StatelessWidget {
                       : null,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                 child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Icon(Icons.insert_drive_file, color: Colors.white),
                     Text(
@@ -489,7 +500,7 @@ class BuildMessageContent extends StatelessWidget {
               );
             } else {
               return Container(
-                width: 100,
+                // width: MediaQuery.of(context).size.width * 0.3,
                 decoration: BoxDecoration(
                   color: Colors.blue,
                   gradient: isMe
@@ -499,9 +510,12 @@ class BuildMessageContent extends StatelessWidget {
                       : null,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.all(8.0),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                child: const Wrap(
                   children: [
                     Icon(Icons.insert_drive_file, color: Colors.white),
                     Text(

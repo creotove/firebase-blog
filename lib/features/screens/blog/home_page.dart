@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:blog/api/firebase_api.dart';
 import 'package:blog/authentication.dart';
 import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/profile/my_blogs.dart';
@@ -34,6 +35,14 @@ class _HomePageState extends State<HomePage> {
     if (_selectedIndex == index) return;
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  @override
+  initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FirebaseApi().initNotifications();
     });
   }
 
@@ -79,6 +88,7 @@ class BlogListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Blog'),
       ),
       body: Padding(

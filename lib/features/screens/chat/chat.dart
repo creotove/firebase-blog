@@ -38,9 +38,12 @@ class _ChatPageState extends State<ChatPage> {
     String messageId,
     bool isDeletedByReceiver,
     bool isDeletedBySender,
+    bool isMe,
   ) {
-    // If the message is deleted by the sender or receiver, do not allow selection
-    if (isDeletedBySender || isDeletedByReceiver) {
+    if (isDeletedBySender) {
+      return;
+    }
+    if (isDeletedByReceiver && !isMe) {
       return;
     }
 
@@ -58,7 +61,19 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> toggleLike(String messageId) async {
+  Future<void> toggleLike(
+    String messageId,
+    bool isDeletedByReceiver,
+    bool isDeletedBySender,
+    bool isMe,
+  ) async {
+    if (isDeletedBySender) {
+      return;
+    }
+    if (isDeletedByReceiver) {
+      return;
+    }
+
     final currentUserId = widget.currentUserId;
     final List users = [widget.currentUserId, widget.receiverUserId];
     users.sort();
@@ -355,17 +370,20 @@ class _ChatPageState extends State<ChatPage> {
           return const Center(child: Text('No messages'));
         } else {
           final messages = snapshot.data!.docs;
-          return ListView.builder(
-            reverse: true,
-            itemCount: messages.length,
-            itemBuilder: (context, index) {
-              return ValueListenableBuilder<Set<String>>(
-                valueListenable: _selectedMessages,
-                builder: (context, selectedMessages, child) {
-                  return _buildMessageItem(messages[index], selectedMessages);
-                },
-              );
-            },
+          return Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: ListView.builder(
+              reverse: true,
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                return ValueListenableBuilder<Set<String>>(
+                  valueListenable: _selectedMessages,
+                  builder: (context, selectedMessages, child) {
+                    return _buildMessageItem(messages[index], selectedMessages);
+                  },
+                );
+              },
+            ),
           );
         }
       },
@@ -387,11 +405,8 @@ class _ChatPageState extends State<ChatPage> {
     return GestureDetector(
       onTap: () async {
         if (_selectionMode) {
-          _onMessageLongPress(
-            document.id,
-            message['isDeletedByReceiver'],
-            message['isDeletedBySender'],
-          );
+          _onMessageLongPress(document.id, message['isDeletedByReceiver'],
+              message['isDeletedBySender'], isMe);
         } else if (messageType == "image") {
           Navigator.pushNamed(
             context,
@@ -419,13 +434,15 @@ class _ChatPageState extends State<ChatPage> {
         }
       },
       onDoubleTap: () async {
-        await toggleLike(document.id);
+        await toggleLike(document.id, message['isDeletedByReceiver'],
+            message['isDeletedBySender'], isMe);
       },
       onLongPress: () {
         _onMessageLongPress(
           document.id,
           message['isDeletedByReceiver'],
           message['isDeletedBySender'],
+          isMe,
         );
       },
       child: Container(

@@ -43,6 +43,8 @@ class MessageHelper {
               },
             }));
       }
+      print(receiverId);
+      print(senderDetails['user_id']);
     } catch (e) {
       print(e);
       throw e;

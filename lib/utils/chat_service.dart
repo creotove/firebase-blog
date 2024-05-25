@@ -135,9 +135,16 @@ class ChatService {
           } else if (!isSender && currentUserId == receiverUserId) {
             batch.update(messageRef, {'isDeletedByReceiver': true});
           } else if (isSender && currentUserId != receiverUserId) {
-            batch.update(messageRef, {'isDeletedBySender': true});
+            batch
+                .update(messageRef, {'isDeletedBySender': true, 'likedBy': []});
+            print('Updatd 3');
           } else if (!isSender && currentUserId != receiverUserId) {
-            batch.update(messageRef, {'isDeletedByReceiver': true});
+            final likedBy = messageData['likedBy'] as List<dynamic>;
+            if (likedBy.contains(currentUserId)) {
+              likedBy.remove(currentUserId);
+            }
+            batch.update(
+                messageRef, {'isDeletedByReceiver': true, 'likedBy': likedBy});
           }
         }
       }

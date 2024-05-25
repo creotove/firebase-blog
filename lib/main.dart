@@ -26,6 +26,7 @@ import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:blog/authentication.dart';
+import 'package:blog/api/firebase_api.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,6 +101,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     // Add a post frame callback to initialize the dynamic links
+   
     WidgetsBinding.instance.addPostFrameCallback((_) {
       initDynamicLinks(context);
     });
@@ -107,147 +109,156 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // Hide the debug banner
-      debugShowCheckedModeBanner: false,
-      title: 'Blog App',
-      theme: AppTheme.darkThemeMode,
-      // Set the navigator key for the context utility service
-      navigatorKey: ContextUtilityService.navigatorKey,
-      // Set the route observer
-      navigatorObservers: [routeObserver],
-      initialRoute: '/signup',
-      // All the registered routes in the app
-      routes: {
-        '/': (context) {
-          if (widget.authBloc.isAuthenticated()) {
-            return HomePage(authBloc: widget.authBloc);
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-        '/add-blog': (context) {
-          if (widget.authBloc.isAuthenticated()) {
-            return AddBlogPage(authBloc: widget.authBloc);
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-        '/login': (context) => SignInPage(authBloc: widget.authBloc),
-        '/chats': (context) => ChatsPage(authBloc: widget.authBloc),
-        '/edit-profile': (context) =>
-            EditProfilePage(authBloc: widget.authBloc),
-        '/signup': (context) {
-          if (widget.authBloc.isAuthenticated()) {
-            return HomePage(authBloc: widget.authBloc);
-          } else {
-            return SignUpPage(authBloc: widget.authBloc);
-          }
-        },
-        '/signin': (context) => SignInPage(authBloc: widget.authBloc),
-        '/my-profile': (context) => MyProfilePage(authBloc: widget.authBloc),
-        '/user-profile': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as String;
-          if (widget.authBloc.isAuthenticated()) {
-            return UserProfilePage(authBloc: widget.authBloc, userId: args);
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-        '/send-image': (context) {
-          final args =
-              ModalRoute.of(context)!.settings.arguments as SendImageArguments;
-          if (widget.authBloc.isAuthenticated()) {
-            return SendImage(
+    return Builder(builder: (context) {
+      return MaterialApp(
+        // Hide the debug banner
+        debugShowCheckedModeBanner: false,
+        title: 'Blog App',
+        theme: AppTheme.darkThemeMode,
+        // Set the navigator key for the context utility service
+        navigatorKey: ContextUtilityService.navigatorKey,
+        // Set the route observer
+        navigatorObservers: [routeObserver],
+        initialRoute: '/signin',
+        // All the registered routes in the app
+        routes: {
+          '/': (context) {
+            if (widget.authBloc.isAuthenticated()) {
+              return HomePage(authBloc: widget.authBloc);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/add-blog': (context) {
+            if (widget.authBloc.isAuthenticated()) {
+              return AddBlogPage(authBloc: widget.authBloc);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/login': (context) => SignInPage(authBloc: widget.authBloc),
+          '/chats': (context) => ChatsPage(authBloc: widget.authBloc),
+          '/edit-profile': (context) =>
+              EditProfilePage(authBloc: widget.authBloc),
+          '/signup': (context) {
+            if (widget.authBloc.isAuthenticated()) {
+              return HomePage(authBloc: widget.authBloc);
+            } else {
+              return SignUpPage(authBloc: widget.authBloc);
+            }
+          },
+          '/signin': (context) {
+            if (widget.authBloc.isAuthenticated()) {
+              return HomePage(authBloc: widget.authBloc);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/my-profile': (context) => MyProfilePage(authBloc: widget.authBloc),
+          '/user-profile': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as String;
+            if (widget.authBloc.isAuthenticated()) {
+              return UserProfilePage(authBloc: widget.authBloc, userId: args);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/send-image': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+                as SendImageArguments;
+            if (widget.authBloc.isAuthenticated()) {
+              return SendImage(
+                authBloc: widget.authBloc,
+                image: args.image,
+                currentUserId: args.currentUserId,
+                receiverUserId: args.receiverUserId,
+              );
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/send-audio': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+                as SendAudioArguments;
+            return SendAudio(
               authBloc: widget.authBloc,
-              image: args.image,
+              audio: args.audio,
               currentUserId: args.currentUserId,
               receiverUserId: args.receiverUserId,
             );
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-        '/send-audio': (context) {
-          final args =
-              ModalRoute.of(context)!.settings.arguments as SendAudioArguments;
-          return SendAudio(
-            authBloc: widget.authBloc,
-            audio: args.audio,
-            currentUserId: args.currentUserId,
-            receiverUserId: args.receiverUserId,
-          );
-        },
-        '/send-document': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as SendDocumentArguments;
-          return SendDocument(
-            authBloc: widget.authBloc,
-            document: args.document,
-            currentUserId: args.currentUserId,
-            receiverUserId: args.receiverUserId,
-          );
-        },
-        '/send-video': (context) {
-          final args =
-              ModalRoute.of(context)!.settings.arguments as SendVideoArguments;
-          return SendVideo(
-            authBloc: widget.authBloc,
-            document: args.video,
-            currentUserId: args.currentUserId,
-            receiverUserId: args.receiverUserId,
-          );
-        },
-        '/my-blogs': (context) => MyBlogsPage(authBloc: widget.authBloc),
-        '/blog-view': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as String;
-          if (widget.authBloc.isAuthenticated()) {
-            return BlogView(authBloc: widget.authBloc, blogId: args);
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-        '/chat': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as MessageNotificationArgs;
-          if (widget.authBloc.isAuthenticated()) {
-            print('receiverUserId: ${args.receiverUserId}');
-            print('senderUserId: ${args.senderUserId}');
-            print('route: ${args.route}');
-            return ChatPage(
-              authBloc: args.authBloc,
+          },
+          '/send-document': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+                as SendDocumentArguments;
+            return SendDocument(
+              authBloc: widget.authBloc,
+              document: args.document,
+              currentUserId: args.currentUserId,
               receiverUserId: args.receiverUserId,
-              currentUserId: args.senderUserId,
             );
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
+          },
+          '/send-video': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+                as SendVideoArguments;
+            return SendVideo(
+              authBloc: widget.authBloc,
+              document: args.video,
+              currentUserId: args.currentUserId,
+              receiverUserId: args.receiverUserId,
+            );
+          },
+          '/my-blogs': (context) => MyBlogsPage(authBloc: widget.authBloc),
+          '/blog-view': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as String;
+            if (widget.authBloc.isAuthenticated()) {
+              return BlogView(authBloc: widget.authBloc, blogId: args);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/chat': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+                as MessageNotificationArgs;
+            if (widget.authBloc.isAuthenticated()) {
+              print('receiverUserId: ${args.receiverUserId}');
+              print('senderUserId: ${args.senderUserId}');
+              print('route: ${args.route}');
+              return ChatPage(
+                authBloc: args.authBloc,
+                receiverUserId: args.receiverUserId,
+                currentUserId: args.senderUserId,
+              );
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/blog-edit': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as String;
+            if (widget.authBloc.isAuthenticated()) {
+              return BlogEditPage(authBloc: widget.authBloc, blogId: args);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/show-image': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as String;
+            if (widget.authBloc.isAuthenticated()) {
+              return ShowSentImage(imagePath: args);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/manage-comments': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as String;
+            if (widget.authBloc.isAuthenticated()) {
+              return ManageCommentsPage(
+                  authBloc: widget.authBloc, blogId: args);
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
         },
-        '/blog-edit': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as String;
-          if (widget.authBloc.isAuthenticated()) {
-            return BlogEditPage(authBloc: widget.authBloc, blogId: args);
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-        '/show-image': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as String;
-          if (widget.authBloc.isAuthenticated()) {
-            return ShowSentImage(imagePath: args);
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-        '/manage-comments': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as String;
-          if (widget.authBloc.isAuthenticated()) {
-            return ManageCommentsPage(authBloc: widget.authBloc, blogId: args);
-          } else {
-            return SignInPage(authBloc: widget.authBloc);
-          }
-        },
-      },
-    );
+      );
+    });
   }
 }

@@ -58,6 +58,7 @@ class _BlogEditPageState extends State<BlogEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Edit Blog'),
       ),
       body: SingleChildScrollView(
