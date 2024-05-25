@@ -566,8 +566,9 @@ class BuildMessageContent extends StatelessWidget {
                 ),
               );
             } else if (isDeletedByReceiver && isMe) {
-              return Container(
-                child: MyVideoPlayer(videoUrl: message['videoUrl']),
+              return SizedBox(
+                width: 200,
+                child: CompactVideoPlayer(videoUrl: message['videoUrl']),
               );
             } else if (isDeletedByReceiver && !isMe) {
               return Container(
@@ -597,8 +598,9 @@ class BuildMessageContent extends StatelessWidget {
                 ),
               );
             } else {
-              return Container(
-                child: MyVideoPlayer(videoUrl: message['videoUrl']),
+              return SizedBox(
+                width: 200,
+                child: CompactVideoPlayer(videoUrl: message['videoUrl']),
               );
             }
           },

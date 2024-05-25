@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
+        android:usesCleartextTraffic="true"
         android:label="blog"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
@@ -44,6 +45,11 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="high_importance_channel" />
     </application>
+    <!-- 
+        Getting INTERNET permission is required for the app to be able to fetch data from the internet.
+        This includes making network requests, as well as using Firebase services.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
