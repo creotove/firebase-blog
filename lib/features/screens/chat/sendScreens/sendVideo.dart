@@ -2,7 +2,7 @@
 
 import 'dart:io';
 import 'package:blog/authentication.dart';
-import 'package:blog/features/screens/chat/message_sender_helper.dart';
+import 'package:blog/utils/message_sender_helper.dart';
 import 'package:flutter/material.dart';
 
 class SendVideo extends StatefulWidget {
@@ -24,11 +24,11 @@ class SendVideo extends StatefulWidget {
 }
 
 class _SendVideoState extends State<SendVideo> {
-  bool isLoaded = false;
+  bool isSending = false;
   void _sendVideo() async {
     try {
       setState(() {
-        isLoaded = true;
+        isSending = true;
       });
       await MessageHelper().sendVideoMessage(
         widget.document,
@@ -40,7 +40,7 @@ class _SendVideoState extends State<SendVideo> {
       print(e);
     } finally {
       setState(() {
-        isLoaded = false;
+        isSending = false;
       });
     }
   }
@@ -51,7 +51,7 @@ class _SendVideoState extends State<SendVideo> {
         appBar: AppBar(
           title: const Text('Send Video'),
           actions: [
-            isLoaded
+            isSending
                 ? const Padding(
                     padding: EdgeInsets.all(8.0),
                     child: CircularProgressIndicator(),

@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:blog/constants.dart';
 import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/widgets/gradient_button.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -69,7 +70,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             final email = user['email'];
             final avatar = user.toString().contains('avatar')
                 ? user['avatar']
-                : 'https://www.w3schools.com/howto/img_avatar.png';
+                : ConstantsHelper.defaultAavatar;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,

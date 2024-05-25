@@ -2,6 +2,7 @@
 
 import 'package:blog/authentication.dart';
 
+// Method to redirect to the profile service if the user is the owner of the blog
 Future<bool> redirectProfileService(String blogOwnerId) async {
   try {
     final AuthenticationBloc authBloc = AuthenticationBloc();

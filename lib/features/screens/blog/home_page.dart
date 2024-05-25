@@ -102,6 +102,9 @@ class BlogListPage extends StatelessWidget {
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             }
+            if (snapshot.data!.docs.isEmpty) {
+              return const Center(child: Text('No blogs found.'));
+            }
             if (snapshot.hasData) {
               final blogs = snapshot.data!.docs;
               return ListView.builder(

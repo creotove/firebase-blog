@@ -2,7 +2,8 @@
 
 import 'dart:io';
 
-import 'package:blog/features/screens/chat/message_sender_helper.dart';
+import 'package:blog/utils/message_sender_helper.dart';
+import 'package:blog/utils/show_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/authentication.dart';
 
@@ -25,13 +26,29 @@ class SendDocument extends StatefulWidget {
 }
 
 class _SendDocumentState extends State<SendDocument> {
+  bool isSending = false;
   void _sendDocument() async {
-    await MessageHelper().sendDocumentMessage(
-      widget.document,
-      widget.currentUserId!,
-      widget.receiverUserId!,
-    );
-    Navigator.pop(context);
+    try {
+      setState(() {
+        isSending = true;
+      });
+      await MessageHelper().sendDocumentMessage(
+        widget.document,
+        widget.currentUserId!,
+        widget.receiverUserId!,
+      );
+
+      Navigator.pop(context);
+      setState(() {
+        showSnackBar(context, 'Document sent successfully!');
+      });
+    } catch (e) {
+      showSnackBar(context, 'Failed to send document');
+    } finally {
+      setState(() {
+        isSending = false;
+      });
+    }
   }
 
   @override
@@ -40,10 +57,15 @@ class _SendDocumentState extends State<SendDocument> {
       appBar: AppBar(
         title: const Text('Send Document'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendDocument,
-          ),
+          if (isSending)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: _sendDocument,
+            ),
         ],
       ),
       body: Column(

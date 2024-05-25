@@ -3,15 +3,18 @@
 import 'dart:io';
 
 import 'package:blog/authentication.dart';
-import 'package:blog/features/screens/chat/message_sender_helper.dart';
+import 'package:blog/constants.dart';
+import 'package:blog/utils/message_sender_helper.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ChatService {
+  // Instance of Firestore
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Method to send a message
   void sendMessage(
     String message,
     String senderUserId,
@@ -31,6 +34,7 @@ class ChatService {
     }
   }
 
+  // Get all message for a chat room
   Stream<QuerySnapshot> getMessages(String senderId, String receiverId) {
     List<String> ids = [senderId, receiverId];
     ids.sort();
@@ -44,6 +48,7 @@ class ChatService {
         .snapshots();
   }
 
+  // Get all chat rooms Ids for a LoggedIn user
   Future<List<String>> getAllChatRooms() async {
     try {
       final AuthenticationBloc authBloc = AuthenticationBloc();
@@ -66,6 +71,7 @@ class ChatService {
     }
   }
 
+  // Get all chat rooms for a LoggedIn user
   Stream<List<Map<String, dynamic>>> getChatRoomsStreamForUser() async* {
     try {
       final loggedInUser = await AuthenticationBloc().getUserDetails();
@@ -92,8 +98,7 @@ class ChatService {
             'senderUserId': chatRoom['senderUserId'],
             'receiverId': chatRoom['receiverUserId'],
             'username': userDoc['username'],
-            'avatar': userDoc['avatar'] ??
-                'https://www.w3schools.com/howto/img_avatar.png',
+            'avatar': userDoc['avatar'] ?? ConstantsHelper.defaultAavatar,
             'lastMessage': chatRoom['type'] == 'text'
                 ? EncryptionHelper.decryptMessage(chatRoom['lastMessage'])
                 : 'Attachment',
@@ -108,6 +113,7 @@ class ChatService {
     }
   }
 
+  //  Deltes messsages from the chat room
   Future<bool> deleteSelectedMessages(String currentUserId,
       String receiverUserId, Set<String> selectedMessages) async {
     try {
@@ -157,6 +163,7 @@ class ChatService {
     }
   }
 
+  // Helper method to pick a audio file
   Future<File?> pickAudio() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.audio);
     if (result != null) {
@@ -165,6 +172,7 @@ class ChatService {
     return null;
   }
 
+  // Helper method to pick a document file that can be audio, video, pdf, etc
   Future<File?> pickDocument() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.any);
     if (result != null) {
@@ -173,6 +181,7 @@ class ChatService {
     return null;
   }
 
+  // Helper method to pick an image file
   Future<File?> pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -182,6 +191,7 @@ class ChatService {
     return null;
   }
 
+  // Helper method to pick a video file
   Future<File?> pickVideo() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.video);
     if (result != null) {

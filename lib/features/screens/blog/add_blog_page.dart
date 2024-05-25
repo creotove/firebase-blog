@@ -20,10 +20,11 @@ class AddBlogPage extends StatefulWidget {
 
 class _AddBlogPageState extends State<AddBlogPage> {
   final TextEditingController _titleController =
-      TextEditingController(text: 'hello world');
+      TextEditingController(text: '');
   final TextEditingController _contentController =
-      TextEditingController(text: 'lorem ipsum dolor sit amet');
+      TextEditingController(text: '');
   File? _image;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +58,9 @@ class _AddBlogPageState extends State<AddBlogPage> {
                       child: Image.file(_image!, fit: BoxFit.cover),
                     ),
               const SizedBox(height: 16.0),
-              GradientButton(buttonText: 'Add Blog', onPressed: _addBlog)
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : GradientButton(buttonText: 'Add Blog', onPressed: _addBlog),
             ],
           ),
         ),
@@ -75,6 +78,10 @@ class _AddBlogPageState extends State<AddBlogPage> {
   }
 
   Future<void> _addBlog() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+    });
     final String title = _titleController.text.trim();
     final String content = _contentController.text.trim();
     if (title.isNotEmpty && content.isNotEmpty && _image != null) {

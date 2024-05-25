@@ -12,7 +12,7 @@ import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendAudio.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendDocument.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendImage.dart';
-import 'package:blog/features/screens/chat/argument_helper.dart.dart';
+import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendVideo.dart';
 import 'package:blog/features/screens/chat/show_send_image.dart';
 import 'package:blog/features/screens/profile/edit_profile.dart';
@@ -26,7 +26,6 @@ import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:blog/authentication.dart';
-import 'package:blog/api/firebase_api.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,7 +100,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     // Add a post frame callback to initialize the dynamic links
-   
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       initDynamicLinks(context);
     });

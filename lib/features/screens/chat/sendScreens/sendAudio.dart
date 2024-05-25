@@ -1,6 +1,7 @@
 // ignore_for_file: file_names, library_private_types_in_public_api
 import 'dart:io';
-import 'package:blog/features/screens/chat/message_sender_helper.dart';
+import 'package:blog/utils/message_sender_helper.dart';
+import 'package:blog/utils/show_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/authentication.dart';
 
@@ -23,13 +24,27 @@ class SendAudio extends StatefulWidget {
 }
 
 class _SendAudioState extends State<SendAudio> {
-  void _sendAudio() {
-    MessageHelper().sendAudioMessage(
-      widget.audio,
-      widget.currentUserId!,
-      widget.receiverUserId!,
-    );
-    Navigator.pop(context);
+  bool isSending = false;
+  void _sendAudio() async {
+    try {
+      MessageHelper().sendAudioMessage(
+        widget.audio,
+        widget.currentUserId!,
+        widget.receiverUserId!,
+      );
+      Navigator.pop(context);
+      setState(() {
+        showSnackBar(context, 'Audio sent successfully!');
+      });
+    } catch (e) {
+      setState(() {
+        showSnackBar(context, 'Failed to send audio');
+      });
+    } finally {
+      setState(() {
+        isSending = false;
+      });
+    }
   }
 
   @override
@@ -38,10 +53,15 @@ class _SendAudioState extends State<SendAudio> {
       appBar: AppBar(
         title: const Text('Send Audio'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendAudio,
-          ),
+          if (isSending)
+            const Center(
+              child: CircularProgressIndicator(),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: _sendAudio,
+            ),
         ],
       ),
       body: const Column(

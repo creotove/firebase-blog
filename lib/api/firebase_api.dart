@@ -2,7 +2,7 @@
 
 import 'dart:convert';
 import 'package:blog/authentication.dart';
-import 'package:blog/features/screens/chat/argument_helper.dart.dart';
+import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/context_utility_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';

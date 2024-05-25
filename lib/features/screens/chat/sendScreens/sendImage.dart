@@ -2,7 +2,7 @@
 
 import 'dart:io';
 
-import 'package:blog/features/screens/chat/message_sender_helper.dart';
+import 'package:blog/utils/message_sender_helper.dart';
 import 'package:blog/utils/show_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/authentication.dart';

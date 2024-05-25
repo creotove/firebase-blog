@@ -1,7 +1,8 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
+import 'package:blog/constants.dart';
 import 'package:blog/utils/chat_service.dart';
-import 'package:blog/features/screens/chat/argument_helper.dart.dart';
+import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:blog/widgets/build_message_content.dart';
 import 'package:blog/widgets/chat_send_file.dart';
@@ -40,36 +41,46 @@ class _ChatPageState extends State<ChatPage> {
     bool isDeletedBySender,
     bool isMe,
   ) {
+    // If the message is deleted by the sender, the receiver can't select it and also sender can't select it
     if (isDeletedBySender) {
       return;
     }
+    // If the message is deleted by the receiver, the receiver can't select it but the sender can select it
     if (isDeletedByReceiver && !isMe) {
       return;
     }
 
     final currentSelection = _selectedMessages.value;
+    // If the message is already selected, remove it from the selected messages
     if (currentSelection.contains(messageId)) {
+      // If the message is the only selected message, disable the selection mode
       if (currentSelection.length == 1) {
         _selectionMode = false;
         _selectedMessages.value = {};
         return;
       }
+      // Otherwise, remove the message from the selected messages
       _selectedMessages.value = Set.from(currentSelection)..remove(messageId);
     } else {
+      // If the message is not selected, add it to the selected messages
       _selectedMessages.value = Set.from(currentSelection)..add(messageId);
+      // If it's the first message to be selected, enable the selection mode
       _selectionMode = true;
     }
   }
 
+  // Method to toggle like on a message
   Future<void> toggleLike(
     String messageId,
     bool isDeletedByReceiver,
     bool isDeletedBySender,
     bool isMe,
   ) async {
+    // If the message is deleted by the sender, the receiver can't like it and also sender can't like it
     if (isDeletedBySender) {
       return;
     }
+    // If the message is deleted by the receiver, the receiver can't like it but the sender can like it
     if (isDeletedByReceiver) {
       return;
     }
@@ -77,6 +88,7 @@ class _ChatPageState extends State<ChatPage> {
     final currentUserId = widget.currentUserId;
     final List users = [widget.currentUserId, widget.receiverUserId];
     users.sort();
+    // Update the message with the new likedBy list
     final messageRef = FirebaseFirestore.instance
         .collection('chatRooms')
         .doc(users[0] + '_' + users[1])
@@ -94,6 +106,7 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // Method to check if a message is liked if the message is liked then show the like icon
   bool isMessageLiked(Map<String, dynamic> message) {
     List<dynamic> likedBy = message['likedBy'] ?? [];
     if (likedBy.isNotEmpty) {
@@ -103,6 +116,7 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // Method to pick image from gallery implements the _pickImage method of ChatService and below function are same for audio, document and video
   void _pickImage() async {
     final pickedImage = await _chatService.pickImage();
     if (pickedImage != null) {
@@ -167,12 +181,14 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  // Getting the receiver user details for displaying their name and avatar
   Future<Map<String, dynamic>> fetchReceiverDetails() async {
     final userDetails =
         await widget.authBloc.getUserDetailsById(widget.receiverUserId);
     return userDetails;
   }
 
+  // Getting the current user id
   Future<String> getCurrentUser() async {
     final userDetails = await widget.authBloc.getUserDetails();
     if (userDetails.isEmpty) {
@@ -209,7 +225,7 @@ class _ChatPageState extends State<ChatPage> {
                   children: [
                     CircleAvatar(
                       backgroundImage: NetworkImage(receiverDetails['avatar'] ??
-                          'https://www.w3schools.com/howto/img_avatar.png'),
+                          ConstantsHelper.defaultAavatar),
                     ),
                     const SizedBox(width: 8.0),
                     Text(receiverName),
