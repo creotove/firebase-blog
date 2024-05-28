@@ -2,8 +2,8 @@
 
 import 'package:blog/constants.dart';
 import 'package:blog/utils/chat_service.dart';
-import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/encryption_helper.dart';
+import 'package:blog/utils/file_picker_helper.dart';
 import 'package:blog/widgets/build_message_content.dart';
 import 'package:blog/widgets/chat_send_file.dart';
 import 'package:blog/widgets/text_filed.dart';
@@ -116,71 +116,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  // Method to pick image from gallery implements the _pickImage method of ChatService and below function are same for audio, document and video
-  void _pickImage() async {
-    final pickedImage = await _chatService.pickImage();
-    if (pickedImage != null) {
-      final arguments = SendImageArguments(
-        image: pickedImage,
-        currentUserId: widget.currentUserId,
-        receiverUserId: widget.receiverUserId,
-      );
-      await Navigator.pushNamed(
-        context,
-        '/send-image',
-        arguments: arguments,
-      );
-    }
-  }
-
-  void _pickAudio() async {
-    final pickedAudio = await _chatService.pickAudio();
-    if (pickedAudio != null) {
-      final arguments = SendAudioArguments(
-        audio: pickedAudio,
-        currentUserId: widget.currentUserId,
-        receiverUserId: widget.receiverUserId,
-      );
-      await Navigator.pushNamed(
-        context,
-        '/send-audio',
-        arguments: arguments,
-      );
-    }
-  }
-
-  void _pickDocument() async {
-    final pickedDocument = await _chatService.pickDocument();
-    if (pickedDocument != null) {
-      final arguments = SendDocumentArguments(
-        document: pickedDocument,
-        currentUserId: widget.currentUserId,
-        receiverUserId: widget.receiverUserId,
-      );
-      await Navigator.pushNamed(
-        context,
-        '/send-document',
-        arguments: arguments,
-      );
-    }
-  }
-
-  void _pickVideo() async {
-    final pickedVideo = await _chatService.pickVideo();
-    if (pickedVideo != null) {
-      final arguments = SendVideoArguments(
-        video: pickedVideo,
-        currentUserId: widget.currentUserId,
-        receiverUserId: widget.receiverUserId,
-      );
-      await Navigator.pushNamed(
-        context,
-        '/send-video',
-        arguments: arguments,
-      );
-    }
-  }
-
   // Getting the receiver user details for displaying their name and avatar
   Future<Map<String, dynamic>> fetchReceiverDetails() async {
     final userDetails =
@@ -240,7 +175,10 @@ class _ChatPageState extends State<ChatPage> {
             valueListenable: _selectedMessages,
             builder: (context, selectedMessages, child) {
               if (selectedMessages.isEmpty) {
-                return Container();
+                return IconButton(
+                  icon: const Icon(Icons.call),
+                  onPressed: () {},
+                );
               }
               return Row(
                 children: [
@@ -316,7 +254,10 @@ class _ChatPageState extends State<ChatPage> {
                                   text: "Gallery",
                                   onPressed: () async {
                                     Navigator.pop(context);
-                                    _pickImage();
+                                    FilePickerHelper().pickImage(
+                                      widget.currentUserId,
+                                      widget.receiverUserId,
+                                    );
                                   },
                                 ),
                                 ChatSendFile(
@@ -324,7 +265,10 @@ class _ChatPageState extends State<ChatPage> {
                                   text: "Audio",
                                   onPressed: () async {
                                     Navigator.pop(context);
-                                    _pickAudio();
+                                    FilePickerHelper().pickAudio(
+                                      widget.currentUserId,
+                                      widget.receiverUserId,
+                                    );
                                   },
                                 ),
                                 ChatSendFile(
@@ -332,7 +276,10 @@ class _ChatPageState extends State<ChatPage> {
                                   text: "Document",
                                   onPressed: () async {
                                     Navigator.pop(context);
-                                    _pickDocument();
+                                    FilePickerHelper().pickDocument(
+                                      widget.currentUserId,
+                                      widget.receiverUserId,
+                                    );
                                   },
                                 ),
                                 ChatSendFile(
@@ -340,7 +287,10 @@ class _ChatPageState extends State<ChatPage> {
                                   text: "Video",
                                   onPressed: () async {
                                     Navigator.pop(context);
-                                    _pickVideo();
+                                    FilePickerHelper().pickVideo(
+                                      widget.currentUserId,
+                                      widget.receiverUserId,
+                                    );
                                   },
                                 ),
                               ],
