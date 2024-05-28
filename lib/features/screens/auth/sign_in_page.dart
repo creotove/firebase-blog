@@ -24,6 +24,7 @@ class _SignInPageState extends State<SignInPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sign In'),
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -66,6 +67,7 @@ class _SignInPageState extends State<SignInPage> {
 
   Future<void> _signIn() async {
     try {
+      print('Sign in with email and password');
       await widget.authBloc.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),

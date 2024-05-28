@@ -8,6 +8,7 @@ import 'package:blog/features/screens/profile/my_profile.dart';
 import 'package:blog/theme/app_pallete.dart';
 import 'package:blog/utils/date_time_formatter.dart';
 import 'package:blog/utils/redirect_profile_service.dart';
+import 'package:blog/utils/truncate_content.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/utils/calculate_reading_time.dart';
@@ -31,7 +32,7 @@ class _HomePageState extends State<HomePage> {
     MyProfilePage(authBloc: AuthenticationBloc()),
   ];
 
-  void _onItemTapped(int index) async {
+  void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
     setState(() {
       _selectedIndex = index;
@@ -132,7 +133,7 @@ class BlogListPage extends StatelessWidget {
                           ),
                         ),
                         subtitle: Text(
-                          _truncateContent(blog['content']),
+                          truncateContent(blog['content']),
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.grey,
@@ -188,9 +189,5 @@ class BlogListPage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _truncateContent(String content) {
-    return content.length > 50 ? '${content.substring(0, 50)}...' : content;
   }
 }

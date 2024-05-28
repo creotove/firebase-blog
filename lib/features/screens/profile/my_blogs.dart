@@ -216,7 +216,9 @@
 
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:blog/theme/app_pallete.dart';
+import 'package:blog/utils/truncate_content.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:blog/authentication.dart';
 
@@ -321,6 +323,7 @@ class _MyBlogsPageState extends State<MyBlogsPage> {
                               ),
                               GestureDetector(
                                 onTap: () {
+                                  Navigator.pop(context);
                                   Navigator.pushNamed(
                                     context,
                                     '/blog-edit',
@@ -350,6 +353,7 @@ class _MyBlogsPageState extends State<MyBlogsPage> {
                               ),
                               GestureDetector(
                                 onTap: () {
+                                  Navigator.pop(context);
                                   Navigator.pushNamed(
                                     context,
                                     '/manage-comments',
@@ -378,11 +382,19 @@ class _MyBlogsPageState extends State<MyBlogsPage> {
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () {
-                                  FirebaseFirestore.instance
+                                onTap: () async {
+                                  final imageRef = blog['image_url'] as String?;
+                                  if (imageRef != null) {
+                                    await FirebaseStorage.instance
+                                        .refFromURL(imageRef)
+                                        .delete();
+                                  }
+                                  await FirebaseFirestore.instance
                                       .collection('blogs')
                                       .doc(blogId)
                                       .delete();
+
+                                  Navigator.pop(context);
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
@@ -412,12 +424,14 @@ class _MyBlogsPageState extends State<MyBlogsPage> {
                     },
                   );
                 },
-                child: ListTile(
-                    title: Text(blog['title']),
-                    subtitle: Text(blog['content']),
-                    trailing: const Icon(
-                      Icons.more_vert,
-                    )),
+                child: Card(
+                  child: ListTile(
+                      title: Text(blog['title']),
+                      subtitle: Text(truncateContent(blog['content'])),
+                      trailing: const Icon(
+                        Icons.more_vert,
+                      )),
+                ),
               );
             },
           );

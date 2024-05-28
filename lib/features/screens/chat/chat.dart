@@ -536,3 +536,39 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 }
+
+
+// Widget _buildCallScreen() {
+//   return Column(
+//     mainAxisAlignment: MainAxisAlignment.center,
+//     children: [
+//       const Text('Call in progress'),
+//       const SizedBox(height: 20),
+//       Row(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           IconButton(
+//             icon: const Icon(Icons.mic_off),
+//             onPressed: () {
+//               // Implement logic to mute/unmute microphone
+//             },
+//           ),
+//           IconButton(
+//             icon: const Icon(Icons.videocam_off),
+//             onPressed: () {
+//               // Implement logic to toggle video on/off
+//             },
+//           ),
+//         ],
+//       ),
+//       const SizedBox(height: 20),
+//       ElevatedButton(
+//         onPressed: () {
+//           // Implement logic to end the call
+//           _endCall();
+//         },
+//         child: const Text('End Call'),
+//       ),
+//     ],
+//   );
+// }

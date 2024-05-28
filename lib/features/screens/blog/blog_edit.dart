@@ -27,6 +27,8 @@ class _BlogEditPageState extends State<BlogEditPage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   File? _image;
+  String? _imageUrl;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -47,6 +49,7 @@ class _BlogEditPageState extends State<BlogEditPage> {
         setState(() {
           _titleController.text = blogSnapshot['title'];
           _contentController.text = blogSnapshot['content'];
+          _imageUrl = blogSnapshot['image_url'];
         });
       }
     } catch (e) {
@@ -58,8 +61,8 @@ class _BlogEditPageState extends State<BlogEditPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         title: const Text('Edit Blog'),
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -78,15 +81,27 @@ class _BlogEditPageState extends State<BlogEditPage> {
                 maxLines: 5,
               ),
               const SizedBox(height: 16.0),
-              _image == null
-                  ? GradientButton(
-                      buttonText: 'Pick Image', onPressed: _pickImage)
-                  : SizedBox(
+              _image != null
+                  ? SizedBox(
                       height: 150,
                       child: Image.file(_image!, fit: BoxFit.cover),
-                    ),
+                    )
+                  : _imageUrl != null
+                      ? SizedBox(
+                          height: 150,
+                          child: Image.network(_imageUrl!, fit: BoxFit.cover),
+                        )
+                      : const Text('No image selected'),
               const SizedBox(height: 16.0),
-              GradientButton(buttonText: 'Update Blog', onPressed: _updateBlog)
+              GradientButton(buttonText: 'Change Image', onPressed: _pickImage),
+              const SizedBox(height: 16.0),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : GradientButton(
+                      buttonText: 'Update Blog',
+                      onPressed: () {
+                        _updateBlog(_imageUrl);
+                      })
             ],
           ),
         ),
@@ -103,58 +118,85 @@ class _BlogEditPageState extends State<BlogEditPage> {
     }
   }
 
-  Future<void> _updateBlog() async {
-    final String title = _titleController.text.trim();
-    final String content = _contentController.text.trim();
-    if (title.isNotEmpty && content.isNotEmpty && _image != null) {
-      // Upload image to Firebase Storage
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('blog_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
-      UploadTask uploadTask = ref.putFile(_image!);
-      TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
-      String imageUrl = await taskSnapshot.ref.getDownloadURL();
-
-      // Update blog data in Firestore
-      await FirebaseFirestore.instance
-          .collection('blogs')
-          .doc(widget.blogId)
-          .update({
-        'title': title,
-        'content': content,
-        'image_url': imageUrl,
-        'updated_at': DateTime.now(),
+  Future<void> _updateBlog(String? previousImageUrl) async {
+    try {
+      setState(() {
+        _isLoading = true;
       });
+      final String title = _titleController.text.trim();
+      final String content = _contentController.text.trim();
+      if (title.isNotEmpty && content.isNotEmpty) {
+        String? imageUrl;
 
-      // Navigate back to previous screen
-      Navigator.pop(context);
-    } else {
-      // Show error if any of the fields are empty
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: const Text('Please fill in all fields and select an image.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+        if (_image != null) {
+          await FirebaseStorage.instance.refFromURL(previousImageUrl!).delete();
+
+          // Upload new image to Firebase Storage
+          Reference ref = FirebaseStorage.instance.ref().child(
+              'blog_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+          UploadTask uploadTask = ref.putFile(_image!);
+          TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
+          imageUrl = await taskSnapshot.ref.getDownloadURL();
+        } else {
+          // If no new image is selected, keep the previous image URL
+          imageUrl = _imageUrl;
+        }
+
+        // Create a map with updated data
+        Map<String, dynamic> updatedData = {
+          'title': title,
+          'content': content,
+          'updated_at': DateTime.now(),
+        };
+
+        // Add image_url to updated data if an image was selected
+        if (imageUrl != null) {
+          updatedData['image_url'] = imageUrl;
+        }
+
+        // Update blog data in Firestore
+        await FirebaseFirestore.instance
+            .collection('blogs')
+            .doc(widget.blogId)
+            .update(updatedData);
+
+        // Navigate back to the previous screen
+        Navigator.pop(context);
+      } else {
+        // Show error if any of the required fields are empty
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Please fill in all fields.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print(e);
+      throw e;
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
-}
 
-Future<File?> pickImage() async {
-  try {
-    final xFile = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (xFile != null) {
-      return File(xFile.path);
+  Future<File?> pickImage() async {
+    try {
+      final xFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (xFile != null) {
+        return File(xFile.path);
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
-    return null;
-  } catch (e) {
-    return null;
   }
 }

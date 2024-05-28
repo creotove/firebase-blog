@@ -8,6 +8,7 @@ import 'package:blog/utils/message_sender_helper.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ChatService {
@@ -137,10 +138,46 @@ class ChatService {
           final bool isSender = messageData['senderId'] == currentUserId;
 
           if (isSender && currentUserId == receiverUserId) {
-            batch.update(messageRef, {'isDeletedBySender': true});
+            if (messageData['type'] == 'image') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['imageUrl'])
+                  .delete();
+            } else if (messageData['type'] == 'video') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['videoUrl'])
+                  .delete();
+            } else if (messageData['type'] == 'audio') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['audioUrl'])
+                  .delete();
+            } else if (messageData['type'] == 'document') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['documentUrl'])
+                  .delete();
+            }
+            batch.update(messageRef, {
+              'isDeletedBySender': true,
+            });
           } else if (!isSender && currentUserId == receiverUserId) {
             batch.update(messageRef, {'isDeletedByReceiver': true});
           } else if (isSender && currentUserId != receiverUserId) {
+            if (messageData['type'] == 'image') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['imageUrl'])
+                  .delete();
+            } else if (messageData['type'] == 'video') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['videoUrl'])
+                  .delete();
+            } else if (messageData['type'] == 'audio') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['audioUrl'])
+                  .delete();
+            } else if (messageData['type'] == 'document') {
+              await FirebaseStorage.instance
+                  .refFromURL(messageData['documentUrl'])
+                  .delete();
+            }
             batch
                 .update(messageRef, {'isDeletedBySender': true, 'likedBy': []});
             print('Updatd 3');
