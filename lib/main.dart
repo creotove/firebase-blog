@@ -7,6 +7,7 @@ import 'package:blog/features/screens/blog/comments/manage_comments.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
+import 'package:blog/features/screens/chat/call/call.dart';
 import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendAudio.dart';
@@ -116,7 +117,7 @@ class _MyAppState extends State<MyApp> {
         navigatorKey: ContextUtilityService.navigatorKey,
         // Set the route observer
         navigatorObservers: [routeObserver],
-        initialRoute: '/signin',
+        initialRoute: '/',
         // All the registered routes in the app
         routes: {
           '/': (context) {
@@ -261,6 +262,24 @@ class _MyAppState extends State<MyApp> {
               );
             } else {
               print('24');
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/call': (context) {
+            final args =
+                ModalRoute.of(context)!.settings.arguments as CallArguments;
+            if (widget.authBloc.isAuthenticated()) {
+              print('25');
+              return CallPage(
+                authBloc: widget.authBloc,
+                avatar: args.avatar,
+                receiverName: args.receiverName,
+                roomId: args.roomId,
+                currentUserId: args.currentUserId,
+                receiverUserId: args.receiverUserId,
+              );
+            } else {
+              print('26');
               return SignInPage(authBloc: widget.authBloc);
             }
           },

@@ -61,6 +61,10 @@ dependencies:
   url_launcher: ^6.2.6
   video_player: ^2.8.6
   flutter_cache_manager: ^3.3.2
+  flutter_webrtc: ^0.9.19
+  permission_handler: ^10.2.0
+  sliding_up_panel: ^2.0.0+1
+  web_socket_channel: ^3.0.0
 
 dev_dependencies:
   flutter_test:

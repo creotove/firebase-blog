@@ -1,6 +1,8 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
 import 'package:blog/constants.dart';
+import 'package:blog/features/screens/chat/call/signaling.dart';
+import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/chat_service.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:blog/utils/file_picker_helper.dart';
@@ -34,6 +36,9 @@ class _ChatPageState extends State<ChatPage> {
   final ValueNotifier<Set<String>> _selectedMessages =
       ValueNotifier<Set<String>>({});
   bool _selectionMode = false;
+  late String receiverAvatar;
+  late String receiverUserName;
+  Signaling signaling = Signaling();
 
   void _onMessageLongPress(
     String messageId,
@@ -148,6 +153,9 @@ class _ChatPageState extends State<ChatPage> {
             } else {
               final receiverDetails = snapshot.data!;
               final receiverName = receiverDetails['username'];
+              receiverAvatar =
+                  receiverDetails['avatar'] ?? ConstantsHelper.defaultAavatar;
+              receiverUserName = receiverDetails['username'];
               return GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(
@@ -177,7 +185,25 @@ class _ChatPageState extends State<ChatPage> {
               if (selectedMessages.isEmpty) {
                 return IconButton(
                   icon: const Icon(Icons.call),
-                  onPressed: () {},
+                  onPressed: () async {
+                    signaling.openUserMedia();
+                    final roomId = await signaling.createRoom();
+                    final arguments = CallArguments(
+                      authBloc: widget.authBloc,
+                      avatar: receiverAvatar,
+                      userName: receiverUserName,
+                      roomId: roomId,
+                      currentUserId: widget.currentUserId,
+                      receiverUserId: widget.receiverUserId,
+                    );
+                    if (roomId.isNotEmpty) {
+                      Navigator.pushNamed(
+                        context,
+                        '/call',
+                        arguments: arguments,
+                      );
+                    }
+                  },
                 );
               }
               return Row(

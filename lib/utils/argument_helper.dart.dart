@@ -63,3 +63,21 @@ class MessageNotificationArgs {
     required this.authBloc,
   });
 }
+
+class CallArguments {
+  final AuthenticationBloc authBloc;
+  final String avatar;
+  final String receiverName;
+  final String roomId;
+  final String currentUserId;
+  final String receiverUserId;
+
+  CallArguments({
+    required this.avatar,
+    required this.receiverName,
+    required this.authBloc,
+    required this.roomId,
+    required this.currentUserId,
+    required this.receiverUserId,
+  });
+}
