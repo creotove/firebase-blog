@@ -191,7 +191,7 @@ class _ChatPageState extends State<ChatPage> {
                     final arguments = CallArguments(
                       authBloc: widget.authBloc,
                       avatar: receiverAvatar,
-                      userName: receiverUserName,
+                      receiverName: receiverUserName,
                       roomId: roomId,
                       currentUserId: widget.currentUserId,
                       receiverUserId: widget.receiverUserId,
