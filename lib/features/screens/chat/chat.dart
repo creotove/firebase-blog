@@ -40,7 +40,7 @@ class _ChatPageState extends State<ChatPage> {
   bool _selectionMode = false;
   late String receiverAvatar;
   late String receiverUserName;
-  Signaling signaling = Signaling();
+  AudioSignaling signaling = AudioSignaling();
 
   void _onMessageLongPress(
     String messageId,

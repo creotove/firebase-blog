@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 typedef StreamStateCallback = void Function(MediaStream stream);
 
-class Signaling {
+class AudioSignaling {
   final Map<String, dynamic> _configuration = {
     'iceServers': [
       {
@@ -23,16 +24,19 @@ class Signaling {
   String? roomId;
   String? currentRoomText;
   StreamStateCallback? onAddRemoteStream;
+  StreamSubscription<DocumentSnapshot>? roomSubscription;
+  StreamSubscription<QuerySnapshot>? calleeCandidatesSubscription;
+  StreamSubscription<QuerySnapshot>? callerCandidatesSubscription;
+  bool isConnectionClosed = false;
 
   Future<void> openUserMedia() async {
-    var stream = await navigator.mediaDevices.getUserMedia({
-      'audio': true,
-      'video': false,
-    });
+    var stream = await navigator.mediaDevices.getUserMedia({'audio': true});
     localStream = stream;
   }
 
   Future<void> hangUp(String roomId) async {
+    isConnectionClosed = true;
+
     localStream?.getTracks().forEach((track) {
       track.stop();
     });
@@ -41,21 +45,30 @@ class Signaling {
       track.stop();
     });
 
-    if (peerConnection != null) {
-      await peerConnection!.close();
-    }
+    await peerConnection?.close();
+    peerConnection = null;
+
+    if (roomSubscription != null) await roomSubscription!.cancel();
+    if (calleeCandidatesSubscription != null)
+      await calleeCandidatesSubscription!.cancel();
+    if (callerCandidatesSubscription != null)
+      await callerCandidatesSubscription!.cancel();
+
     if (roomId.isNotEmpty) {
       FirebaseFirestore db = FirebaseFirestore.instance;
       DocumentReference roomRef = db.collection('rooms').doc(roomId);
+
       var calleeCandidates = await roomRef.collection('calleeCandidates').get();
       for (var candidate in calleeCandidates.docs) {
         await candidate.reference.delete();
       }
+
       var callerCandidates = await roomRef.collection('callerCandidates').get();
       for (var candidate in callerCandidates.docs) {
         await candidate.reference.delete();
       }
-      await roomRef.delete();
+
+      await roomRef.update({'hangup': true});
     }
 
     localStream?.dispose();
@@ -66,9 +79,8 @@ class Signaling {
     FirebaseFirestore db = FirebaseFirestore.instance;
     DocumentReference roomRef = db.collection('rooms').doc();
 
-    print('Create PeerConnection with configuration: $_configuration');
-
     peerConnection = await createPeerConnection(_configuration);
+    isConnectionClosed = false;
 
     registerPeerConnectionListeners();
 
@@ -78,44 +90,55 @@ class Signaling {
 
     var callerCandidatesCollection = roomRef.collection('callerCandidates');
     peerConnection?.onIceCandidate = (candidate) {
-      print('New ICE candidate: $candidate');
       callerCandidatesCollection.add(candidate.toMap());
     };
 
     RTCSessionDescription offer = await peerConnection!.createOffer();
     await peerConnection!.setLocalDescription(offer);
 
-    Map<String, dynamic> roomWithOffer = {'offer': offer.toMap()};
-    await roomRef.set(roomWithOffer);
+    await roomRef.set({
+      'offer': offer.toMap(),
+      'hangup': false, // Initialize hangup field
+    });
 
-    peerConnection?.onTrack = (event) async {
-      print('Received remote track: ${event.track.id}');
-      remoteStream ??= await createLocalMediaStream('remoteStream');
+    peerConnection?.onTrack = (event) {
       remoteStream?.addTrack(event.track);
-      onAddRemoteStream?.call(remoteStream!);
     };
 
-    roomRef.snapshots().listen((snapshots) async {
-      Map<String, dynamic> data = snapshots.data() as Map<String, dynamic>;
-      if (peerConnection?.getRemoteDescription() != null &&
-          data.containsKey('answer')) {
-        print('Got an answer: ${data['answer']}');
-        RTCSessionDescription answer = RTCSessionDescription(
-            data['answer']['sdp'], data['answer']['type']);
-        await peerConnection!.setRemoteDescription(answer);
+    // Listen for hangup
+    roomSubscription = roomRef.snapshots().listen((snapshot) async {
+      var data = snapshot.data() as Map<String, dynamic>;
+      if (data['hangup'] == true) {
+        await hangUp(roomRef.id);
       }
     });
 
-    roomRef.collection('calleeCandidates').snapshots().listen((snapshots) {
+    roomSubscription = roomRef.snapshots().listen((snapshot) async {
+      var data = snapshot.data() as Map<String, dynamic>;
+      if (!isConnectionClosed && data.containsKey('answer')) {
+        RTCSessionDescription answer = RTCSessionDescription(
+          data['answer']['sdp'],
+          data['answer']['type'],
+        );
+        if (answer.sdp != '' && answer.sdp != null)
+          await peerConnection!.setRemoteDescription(answer);
+        else
+          print('Answer is null');
+      }
+    });
+
+    calleeCandidatesSubscription =
+        roomRef.collection('calleeCandidates').snapshots().listen((snapshots) {
       for (var change in snapshots.docChanges) {
         if (change.type == DocumentChangeType.added) {
-          Map<String, dynamic> data = change.doc.data() as Map<String, dynamic>;
-          print('Got new remote ICE candidate: $data');
-          peerConnection?.addCandidate(RTCIceCandidate(
-            data['candidate'],
-            data['sdpMid'],
-            data['sdpMLineIndex'],
-          ));
+          var data = change.doc.data() as Map<String, dynamic>;
+          if (!isConnectionClosed) {
+            peerConnection?.addCandidate(RTCIceCandidate(
+              data['candidate'],
+              data['sdpMid'],
+              data['sdpMLineIndex'],
+            ));
+          }
         }
       }
     });
@@ -128,57 +151,64 @@ class Signaling {
     DocumentReference roomRef = db.collection('rooms').doc(roomId);
     DocumentSnapshot roomSnapshot = await roomRef.get();
 
-    print('Create PeerConnection with configuration: $_configuration');
     if (roomSnapshot.exists) {
       peerConnection = await createPeerConnection(_configuration);
+      isConnectionClosed = false;
 
       registerPeerConnectionListeners();
 
+      // Ensure localStream is available
+      if (localStream == null) {
+        await openUserMedia();
+      }
+
+      // Add local tracks to peer connection
       localStream?.getTracks().forEach((track) {
         peerConnection?.addTrack(track, localStream!);
       });
 
       var calleeCandidatesCollection = roomRef.collection('calleeCandidates');
       peerConnection?.onIceCandidate = (candidate) {
-        print('New ICE candidate: $candidate');
         calleeCandidatesCollection.add(candidate.toMap());
       };
 
-      peerConnection?.onTrack = (RTCTrackEvent event) async {
-        print('Received remote track: ${event.track.id}');
-        remoteStream ??= await createLocalMediaStream('remoteStream');
+      peerConnection?.onTrack = (RTCTrackEvent event) {
         event.streams[0].getTracks().forEach((track) {
-          print('Add a track to the remoteStream: $track');
           remoteStream?.addTrack(track);
         });
-        onAddRemoteStream?.call(remoteStream!);
+        if (onAddRemoteStream != null) {
+          onAddRemoteStream!(remoteStream!);
+        }
       };
 
       var data = roomSnapshot.data() as Map<String, dynamic>;
       var offer = data['offer'];
-      print('Got offer: $offer');
       await peerConnection!.setRemoteDescription(
-        RTCSessionDescription(
-          offer['sdp'],
-          offer['type'],
-        ),
+        RTCSessionDescription(offer['sdp'], offer['type']),
       );
       var answer = await peerConnection!.createAnswer();
       await peerConnection!.setLocalDescription(answer);
 
-      Map<String, dynamic> roomWithAnswer = {
+      await roomRef.update({
         'answer': {'sdp': answer.sdp, 'type': answer.type}
-      };
+      });
 
-      await roomRef.update(roomWithAnswer);
+      // Listen for hangup
+      roomSubscription = roomRef.snapshots().listen((snapshot) async {
+        var data = snapshot.data() as Map<String, dynamic>;
+        if (data['hangup'] == true) {
+          await hangUp(roomRef.id);
+        }
+      });
 
-      roomRef.collection('callerCandidates').snapshots().listen(
-        (snapshots) {
-          for (var change in snapshots.docChanges) {
-            if (change.type == DocumentChangeType.added) {
-              Map<String, dynamic> data =
-                  change.doc.data() as Map<String, dynamic>;
-              print('Got new remote ICE candidate: $data');
+      callerCandidatesSubscription = roomRef
+          .collection('callerCandidates')
+          .snapshots()
+          .listen((snapshots) {
+        for (var change in snapshots.docChanges) {
+          if (change.type == DocumentChangeType.added) {
+            var data = change.doc.data() as Map<String, dynamic>;
+            if (!isConnectionClosed) {
               peerConnection?.addCandidate(RTCIceCandidate(
                 data['candidate'],
                 data['sdpMid'],
@@ -186,37 +216,37 @@ class Signaling {
               ));
             }
           }
-        },
-      );
+        }
+      });
+
+      peerConnection?.onConnectionState = (RTCPeerConnectionState state) {
+        print('Connection state change: $state');
+      };
     }
   }
 
   void registerPeerConnectionListeners() {
-    peerConnection?.onIceGatheringState = (RTCIceGatheringState state) {
+    peerConnection?.onIceGatheringState = (state) {
       print('ICE gathering state changed: $state');
     };
 
-    peerConnection?.onConnectionState = (RTCPeerConnectionState state) {
+    peerConnection?.onConnectionState = (state) {
       print('Connection state change: $state');
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
-        print('Remote user has joined the room.');
-      }
     };
 
-    peerConnection?.onSignalingState = (RTCSignalingState state) {
+    peerConnection?.onSignalingState = (state) {
       print('Signaling state change: $state');
     };
 
-    peerConnection?.onIceConnectionState = (RTCIceConnectionState state) {
+    peerConnection?.onIceConnectionState = (state) {
       print('ICE connection state change: $state');
     };
 
-    peerConnection?.onIceCandidate = (RTCIceCandidate candidate) {
+    peerConnection?.onIceCandidate = (candidate) {
       print('ICE candidate: $candidate');
     };
 
-    peerConnection?.onAddStream = (MediaStream stream) {
-      print('Add remote stream: $stream');
+    peerConnection?.onAddStream = (stream) {
       onAddRemoteStream?.call(stream);
       remoteStream = stream;
     };

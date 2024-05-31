@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print
 
+import 'package:blog/api/firebase_api.dart';
 import 'package:blog/features/screens/blog/add_blog_page.dart';
 import 'package:blog/features/screens/blog/blog_edit.dart';
 import 'package:blog/features/screens/blog/blog_view_page.dart';
@@ -13,6 +14,7 @@ import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendAudio.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendDocument.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendImage.dart';
+import 'package:blog/features/screens/chat/videoCall/video_call.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendVideo.dart';
 import 'package:blog/features/screens/chat/show_send_image.dart';
@@ -122,65 +124,49 @@ class _MyAppState extends State<MyApp> {
         routes: {
           '/': (context) {
             if (widget.authBloc.isAuthenticated()) {
-              print('1');
               return HomePage(authBloc: widget.authBloc);
             } else {
-              print('2');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
           '/add-blog': (context) {
-            print('3');
             if (widget.authBloc.isAuthenticated()) {
               return AddBlogPage(authBloc: widget.authBloc);
             } else {
-              print('4');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
           '/login': (context) {
-            print('5');
             return SignInPage(authBloc: widget.authBloc);
           },
           '/chats': (context) {
-            print('6');
             return ChatsPage(authBloc: widget.authBloc);
           },
           '/edit-profile': (context) {
-            print('7');
             return EditProfilePage(authBloc: widget.authBloc);
           },
           '/signup': (context) {
-            print('8');
             if (widget.authBloc.isAuthenticated()) {
               return HomePage(authBloc: widget.authBloc);
             } else {
-              print('9');
               return SignUpPage(authBloc: widget.authBloc);
             }
           },
           '/signin': (context) {
             if (widget.authBloc.isAuthenticated()) {
-              print('10');
-              print('Authenticated');
               return HomePage(authBloc: widget.authBloc);
             } else {
-              print('11');
-              print('Not Authenticated');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
           '/my-profile': (context) {
-            print('12');
             return MyProfilePage(authBloc: widget.authBloc);
           },
           '/user-profile': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as String;
             if (widget.authBloc.isAuthenticated()) {
-              print('13');
               return UserProfilePage(authBloc: widget.authBloc, userId: args);
             } else {
-              print('14');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
@@ -188,7 +174,6 @@ class _MyAppState extends State<MyApp> {
             final args = ModalRoute.of(context)!.settings.arguments
                 as SendImageArguments;
             if (widget.authBloc.isAuthenticated()) {
-              print('15');
               return SendImage(
                 authBloc: widget.authBloc,
                 image: args.image,
@@ -196,12 +181,10 @@ class _MyAppState extends State<MyApp> {
                 receiverUserId: args.receiverUserId,
               );
             } else {
-              print('16');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
           '/send-audio': (context) {
-            print('17');
             final args = ModalRoute.of(context)!.settings.arguments
                 as SendAudioArguments;
             return SendAudio(
@@ -212,7 +195,6 @@ class _MyAppState extends State<MyApp> {
             );
           },
           '/send-document': (context) {
-            print('18');
             final args = ModalRoute.of(context)!.settings.arguments
                 as SendDocumentArguments;
             return SendDocument(
@@ -223,7 +205,6 @@ class _MyAppState extends State<MyApp> {
             );
           },
           '/send-video': (context) {
-            print('19');
             final args = ModalRoute.of(context)!.settings.arguments
                 as SendVideoArguments;
             return SendVideo(
@@ -234,16 +215,13 @@ class _MyAppState extends State<MyApp> {
             );
           },
           '/my-blogs': (context) {
-            print('20');
             return MyBlogsPage(authBloc: widget.authBloc);
           },
           '/blog-view': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as String;
             if (widget.authBloc.isAuthenticated()) {
-              print('21');
               return BlogView(authBloc: widget.authBloc, blogId: args);
             } else {
-              print('22');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
@@ -251,25 +229,20 @@ class _MyAppState extends State<MyApp> {
             final args = ModalRoute.of(context)!.settings.arguments
                 as MessageNotificationArgs;
             if (widget.authBloc.isAuthenticated()) {
-              print('23');
-              print('receiverUserId: ${args.receiverUserId}');
-              print('senderUserId: ${args.senderUserId}');
-              print('route: ${args.route}');
               return ChatPage(
                 authBloc: args.authBloc,
                 receiverUserId: args.receiverUserId,
                 currentUserId: args.senderUserId,
               );
             } else {
-              print('24');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
+          '/back-up-call': (context) => const VideoCall(),
           '/call': (context) {
             final args =
                 ModalRoute.of(context)!.settings.arguments as CallArguments;
             if (widget.authBloc.isAuthenticated()) {
-              print('25');
               return CallPage(
                 authBloc: widget.authBloc,
                 avatar: args.avatar,
@@ -279,38 +252,31 @@ class _MyAppState extends State<MyApp> {
                 receiverUserId: args.receiverUserId,
               );
             } else {
-              print('26');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
           '/blog-edit': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as String;
             if (widget.authBloc.isAuthenticated()) {
-              print('25');
               return BlogEditPage(authBloc: widget.authBloc, blogId: args);
             } else {
-              print('26');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
           '/show-image': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as String;
             if (widget.authBloc.isAuthenticated()) {
-              print('27');
               return ShowSentImage(imagePath: args);
             } else {
-              print('28');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
           '/manage-comments': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as String;
             if (widget.authBloc.isAuthenticated()) {
-              print('29');
               return ManageCommentsPage(
                   authBloc: widget.authBloc, blogId: args);
             } else {
-              print('30');
               return SignInPage(authBloc: widget.authBloc);
             }
           },
