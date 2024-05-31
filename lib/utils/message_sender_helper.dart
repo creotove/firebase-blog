@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print, use_rethrow_when_possible
 
 import 'package:blog/authentication.dart';
+import 'package:blog/constants.dart';
 import 'package:blog/features/models/message.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,6 +13,52 @@ import 'package:blog/secrets/fcm_server_key.dart';
 
 class MessageHelper {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> sendCallNotification(String receiverId, String roomId) async {
+    try {
+      DocumentSnapshot userDoc = await _firestore
+          .collection('users')
+          .where('user_id', isEqualTo: receiverId)
+          .get()
+          .then((value) => value.docs.first);
+      final userdata = userDoc.data();
+      String receiverToken = (userdata as Map<String, dynamic>)['fcmToken'];
+      final senderDetails = await AuthenticationBloc().getUserDetails();
+      print(senderDetails['user_id']);
+      final senderName = senderDetails['username'];
+      final senderAvatar = senderDetails.containsKey('avatar')
+          ? senderDetails['avatar']
+          : ConstantsHelper.defaultAavatar;
+
+      if (receiverToken.isNotEmpty) {
+        await http.post(
+          Uri.parse('https://fcm.googleapis.com/fcm/send'),
+          headers: {
+            HttpHeaders.contentTypeHeader: 'application/json',
+            HttpHeaders.authorizationHeader: FcmSecrets.serverKey,
+          },
+          body: jsonEncode(
+            {
+              'to': receiverToken,
+              'notification': {
+                'title': "Call from $senderName",
+              },
+              'data': {
+                'route': '/call',
+                'roomId': roomId,
+                'senderUserId': senderDetails['user_id'],
+                'avatar': senderAvatar,
+                'receiverName': senderName,
+              },
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
 
   Future<void> _sendNotification(String receiverId, String message) async {
     try {

@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:blog/authentication.dart';
+import 'package:blog/features/screens/chat/call/signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/context_utility_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -84,16 +85,33 @@ class FirebaseApi {
       final route = message.data['route'];
       final receiverUserId = await AuthenticationBloc().getCurrentUserId();
       final senderUserId = message.data['senderUserId'];
-      final myArgs = MessageNotificationArgs(
-        receiverUserId: senderUserId,
-        senderUserId: receiverUserId.toString(),
-        route: route,
-        authBloc: AuthenticationBloc(),
-      );
 
-      if (route == '/chat' && receiverUserId != null) {
-        ContextUtilityService.navigatorKey.currentState
-            ?.pushNamed(route, arguments: myArgs);
+      if (receiverUserId != null) {
+        if (route == '/chat') {
+          final myArgs = MessageNotificationArgs(
+            receiverUserId: senderUserId,
+            senderUserId: receiverUserId.toString(),
+            route: route,
+            authBloc: AuthenticationBloc(),
+          );
+          ContextUtilityService.navigatorKey.currentState
+              ?.pushNamed(route, arguments: myArgs);
+        } else if (route == '/call') {
+          final roomId = message.data['roomId'];
+          final avatar = message.data['avatar'];
+          final receiverName = message.data['receiverName'];
+          final callArgs = CallArguments(
+            authBloc: AuthenticationBloc(),
+            avatar: avatar,
+            receiverName: receiverName,
+            roomId: roomId,
+            currentUserId: receiverUserId.toString(),
+            receiverUserId: senderUserId,
+          );
+          await Signaling().joinRoom(roomId);
+          await ContextUtilityService.navigatorKey.currentState
+              ?.pushNamed(route, arguments: callArgs);
+        }
       }
     } catch (e) {
       print(e);

@@ -1,17 +1,19 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously
 
 import 'package:blog/constants.dart';
-import 'package:blog/features/screens/chat/call/signaling.dart';
+import 'package:blog/features/screens/chat/call/audio_signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/chat_service.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:blog/utils/file_picker_helper.dart';
+import 'package:blog/utils/message_sender_helper.dart';
 import 'package:blog/widgets/build_message_content.dart';
 import 'package:blog/widgets/chat_send_file.dart';
 import 'package:blog/widgets/text_filed.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ChatPage extends StatefulWidget {
@@ -139,6 +141,14 @@ class _ChatPageState extends State<ChatPage> {
     return currentUserId;
   }
 
+  Future<bool> _requestPermissions() async {
+    final statuses = await [
+      Permission.microphone,
+    ].request();
+
+    return statuses[Permission.microphone]!.isGranted;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,22 +196,38 @@ class _ChatPageState extends State<ChatPage> {
                 return IconButton(
                   icon: const Icon(Icons.call),
                   onPressed: () async {
-                    signaling.openUserMedia();
-                    final roomId = await signaling.createRoom();
-                    final arguments = CallArguments(
-                      authBloc: widget.authBloc,
-                      avatar: receiverAvatar,
-                      receiverName: receiverUserName,
-                      roomId: roomId,
-                      currentUserId: widget.currentUserId,
-                      receiverUserId: widget.receiverUserId,
-                    );
-                    if (roomId.isNotEmpty) {
-                      Navigator.pushNamed(
-                        context,
-                        '/call',
-                        arguments: arguments,
-                      );
+                    try {
+                      await signaling.openUserMedia();
+                      if (await _requestPermissions()) {
+                        final roomId = await signaling.createRoom();
+                        print("created a room");
+                        final arguments = CallArguments(
+                          authBloc: widget.authBloc,
+                          avatar: receiverAvatar,
+                          receiverName: receiverUserName,
+                          roomId: roomId,
+                          currentUserId: widget.currentUserId,
+                          receiverUserId: widget.receiverUserId,
+                        );
+                        await MessageHelper().sendCallNotification(
+                            widget.receiverUserId, roomId);
+                        print("Sent noti redirecting to the call page");
+                        if (roomId.isNotEmpty) {
+                          await Navigator.pushNamed(
+                            context,
+                            '/call',
+                            arguments: arguments,
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Permission denied'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      print(e);
                     }
                   },
                 );
@@ -512,39 +538,3 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 }
-
-
-// Widget _buildCallScreen() {
-//   return Column(
-//     mainAxisAlignment: MainAxisAlignment.center,
-//     children: [
-//       const Text('Call in progress'),
-//       const SizedBox(height: 20),
-//       Row(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           IconButton(
-//             icon: const Icon(Icons.mic_off),
-//             onPressed: () {
-//               // Implement logic to mute/unmute microphone
-//             },
-//           ),
-//           IconButton(
-//             icon: const Icon(Icons.videocam_off),
-//             onPressed: () {
-//               // Implement logic to toggle video on/off
-//             },
-//           ),
-//         ],
-//       ),
-//       const SizedBox(height: 20),
-//       ElevatedButton(
-//         onPressed: () {
-//           // Implement logic to end the call
-//           _endCall();
-//         },
-//         child: const Text('End Call'),
-//       ),
-//     ],
-//   );
-// }

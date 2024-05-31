@@ -1,242 +1,130 @@
-// import 'package:blog/features/screens/chat/call/signaling.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_webrtc/flutter_webrtc.dart';
-
-// class CallPage extends StatefulWidget {
-//   const CallPage({super.key});
-
-//   @override
-//   State<CallPage> createState() => _CallPageState();
-// }
-
-// class _CallPageState extends State<CallPage> {
-//   Signaling signaling = Signaling();
-//   RTCVideoRenderer localRenderer = RTCVideoRenderer();
-//   RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
-//   String? roomId;
-//   TextEditingController textEditingController = TextEditingController();
-
-//   @override
-//   void initState() {
-//     localRenderer.initialize();
-//     remoteRenderer.initialize();
-//     signaling.onAddRemoteStream = (stream) {
-//       remoteRenderer.srcObject = stream;
-//       setState(() {});
-//     };
-//     super.initState();
-//   }
-
-//   @override
-//   void dispose() {
-//     localRenderer.dispose();
-//     remoteRenderer.dispose();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//         title: const Text("WebRTC Demo"),
-//       ),
-//       body: Column(
-//         children: [
-//           SingleChildScrollView(
-//             scrollDirection: Axis.horizontal,
-//             child: Row(
-//               children: [
-//                 ElevatedButton(
-//                     onPressed: () async {
-//                       await signaling.openUserMedia(
-//                           localRenderer, remoteRenderer);
-//                       setState(() {});
-//                     },
-//                     child: const Text("Open Camera")),
-//                 const SizedBox(width: 10),
-//                 ElevatedButton(
-//                   onPressed: () async {
-//                     roomId = await signaling.createRoom(remoteRenderer);
-//                     textEditingController.text = roomId!;
-//                     setState(() {
-//                       roomId = signaling.roomId;
-//                     });
-//                   },
-//                   child: const Text('Create Room'),
-//                 ),
-//                 const SizedBox(width: 10),
-//                 ElevatedButton(
-//                   onPressed: () async {
-//                     await signaling.joinRoom(textEditingController.text);
-//                     setState(() {
-//                       roomId = textEditingController.text;
-//                     });
-//                   },
-//                   child: const Text('Join Room'),
-//                 ),
-//                 const SizedBox(width: 10),
-//                 ElevatedButton(
-//                   onPressed: () async {
-//                     await signaling.hangUp(localRenderer);
-//                     setState(() {
-//                       roomId = null;
-//                     });
-//                   },
-//                   child: const Text('Hang Up'),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           const SizedBox(height: 10),
-//           Expanded(
-//             child: Row(
-//               children: [
-//                 Expanded(
-//                   child: RTCVideoView(localRenderer, mirror: true),
-//                 ),
-//                 Expanded(
-//                   child: RTCVideoView(remoteRenderer),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.all(10),
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.center,
-//               children: [
-//                 Text("Join the following room:"),
-//                 Flexible(
-//                   child: TextFormField(controller: textEditingController),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-import 'package:blog/authentication.dart';
-import 'package:blog/features/screens/chat/call/signaling.dart';
 import 'package:flutter/material.dart';
+import 'package:blog/authentication.dart';
+import 'package:blog/features/screens/chat/call/audio_signaling.dart';
 
 class CallPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
-  final String currentUserId;
-  final String receiverUserId;
-  final String roomId;
   final String avatar;
   final String receiverName;
-  const CallPage(
-      {super.key,
-      required this.authBloc,
-      required this.currentUserId,
-      required this.receiverUserId,
-      required this.roomId,
-      required this.avatar,
-      required this.receiverName});
+  final String roomId;
+  final String currentUserId;
+  final String receiverUserId;
+
+  const CallPage({
+    Key? key,
+    required this.authBloc,
+    required this.avatar,
+    required this.receiverName,
+    required this.roomId,
+    required this.currentUserId,
+    required this.receiverUserId,
+  }) : super(key: key);
 
   @override
-  State<CallPage> createState() => _CallPageState();
+  _CallPageState createState() => _CallPageState();
 }
 
 class _CallPageState extends State<CallPage> {
-  Signaling signaling = Signaling();
-  String? roomId;
-  TextEditingController textEditingController = TextEditingController();
+  final Signaling signaling = Signaling();
+  bool _isMuted = false;
+  bool _isSpeakerOn = false;
+  bool _callActive = false;
+  bool _isHangingUp = false;
 
   @override
   void initState() {
-    signaling.onAddRemoteStream = (stream) {
-      setState(() {});
-    };
     super.initState();
+    signaling.onAddRemoteStream = (stream) {
+      setState(() {
+        _callActive = true;
+      });
+    };
+    // _startCall();
+    _checkCallTimeout();
   }
 
   @override
   void dispose() {
+    if (!_isHangingUp) {
+      signaling.hangUp(widget.roomId);
+    }
     super.dispose();
+  }
+
+  void _checkCallTimeout() {
+    Future.delayed(const Duration(seconds: 60), () {
+      if (!_callActive) {
+        print("Call timeout. Hanging up.");
+        _hangUp();
+      }
+    });
+  }
+
+  Future<void> _hangUp() async {
+    if (!_isHangingUp) {
+      _isHangingUp = true;
+      await signaling.hangUp(widget.roomId);
+      Navigator.pop(context);
+    }
+  }
+
+  void _toggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+      signaling.localStream?.getAudioTracks()[0].enabled = !_isMuted;
+      print("Mic is now: ${_isMuted ? "Muted" : "Unmuted"}");
+    });
+  }
+
+  void _toggleSpeaker() {
+    setState(() {
+      _isSpeakerOn = !_isSpeakerOn;
+      print("Speaker is now: ${_isSpeakerOn ? "On" : "Off"}");
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text("WebRTC Audio Call Demo"),
+        title: Text(widget.receiverName),
       ),
-      body: Column(
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              backgroundImage: NetworkImage(widget.avatar),
+              radius: 50,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              widget.receiverName,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    await signaling.openUserMedia();
-                    setState(() {});
-                  },
-                  child: const Text("Open Microphone"),
+                IconButton(
+                  icon: Icon(_isMuted ? Icons.mic_off : Icons.mic),
+                  onPressed: _toggleMute,
+                  color: _isMuted ? Colors.red : Colors.black,
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    roomId = await signaling.createRoom();
-                    textEditingController.text = roomId!;
-                    setState(() {
-                      roomId = signaling.roomId;
-                    });
-                  },
-                  child: const Text('Create Room'),
+                IconButton(
+                  icon: const Icon(Icons.call_end),
+                  onPressed: _hangUp,
+                  color: Colors.red,
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    await signaling.joinRoom(textEditingController.text);
-                    setState(() {
-                      roomId = textEditingController.text;
-                    });
-                  },
-                  child: const Text('Join Room'),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    await signaling.hangUp();
-                    setState(() {
-                      roomId = null;
-                    });
-                  },
-                  child: const Text('Hang Up'),
+                IconButton(
+                  icon: Icon(_isSpeakerOn ? Icons.volume_up : Icons.hearing),
+                  onPressed: _toggleSpeaker,
+                  color: _isSpeakerOn ? Colors.green : Colors.black,
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: Center(
-              child: roomId == null
-                  ? const Text("No active call")
-                  : const Text("In a call..."),
-            ),
-          ),
-          // Padding(
-          //   padding: const EdgeInsets.all(10),
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.center,
-          //     children: [
-          //       const Text("Join the following room:"),
-          //       const SizedBox(width: 10),
-          //       Flexible(
-          //         child: TextFormField(controller: textEditingController),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-        ],
+          ],
+        ),
       ),
     );
   }
