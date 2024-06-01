@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print
 
-import 'package:blog/api/firebase_api.dart';
+import 'package:blog/constants.dart';
 import 'package:blog/features/screens/blog/add_blog_page.dart';
 import 'package:blog/features/screens/blog/blog_edit.dart';
 import 'package:blog/features/screens/blog/blog_view_page.dart';
@@ -9,6 +9,7 @@ import 'package:blog/features/screens/blog/home_page.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
 import 'package:blog/features/screens/chat/call/call.dart';
+import 'package:blog/features/screens/chat/call/call_accept_decline.dart';
 import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendAudio.dart';
@@ -239,6 +240,23 @@ class _MyAppState extends State<MyApp> {
             }
           },
           '/back-up-call': (context) => const VideoCall(),
+          '/call-accept-and-decline': (context) {
+            final args =
+                ModalRoute.of(context)!.settings.arguments as CallArguments;
+            if (widget.authBloc.isAuthenticated()) {
+              return CallScreen(
+                authBloc: widget.authBloc,
+                avatar: args.avatar,
+                receiverName: args.receiverName,
+                roomId: args.roomId,
+                currentUserId: args.currentUserId,
+                receiverUserId: args.receiverUserId,
+                initialCallStatus: args.callStatus,
+              );
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
           '/call': (context) {
             final args =
                 ModalRoute.of(context)!.settings.arguments as CallArguments;

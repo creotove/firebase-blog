@@ -44,7 +44,7 @@ class MessageHelper {
                 'title': "Call from $senderName",
               },
               'data': {
-                'route': '/call',
+                'route': '/call-accept-and-decline',
                 'roomId': roomId,
                 'senderUserId': senderDetails['user_id'],
                 'avatar': senderAvatar,

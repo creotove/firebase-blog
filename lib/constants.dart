@@ -3,4 +3,4 @@ class ConstantsHelper {
       'https://www.w3schools.com/howto/img_avatar.png';
 }
 
-enum DuringCallStatus { calling, accepted, ringing }
+enum DuringCallStatus { calling, accepted, ringing, declined }

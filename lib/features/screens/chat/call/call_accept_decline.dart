@@ -1,366 +1,266 @@
-import 'dart:ui';
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
-import 'package:blog/theme/app_pallete.dart';
-import 'package:blog/utils/webrtc_manager.dart';
-import 'package:blog/widgets/count_down_dialer.dart';
-import 'package:blog/widgets/custom_cricular_image.dart';
-import 'package:flutter/foundation.dart';
+import 'package:blog/features/screens/blog/home_page.dart';
+import 'package:blog/utils/perms_handler.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'audio_signaling.dart'; // import your signaling class
+import 'dart:async';
 
-class CallAcceptDeclinePage extends StatefulWidget {
-  final DuringCallStatus? callStatus;
-  final String? roomId;
+class CallScreen extends StatefulWidget {
   final AuthenticationBloc authBloc;
+  final DuringCallStatus initialCallStatus;
+  final String avatar;
+  final String receiverName;
+  final String roomId; // Changed to mutable
+  final String currentUserId;
+  final String receiverUserId;
 
-  const CallAcceptDeclinePage(
-      {super.key, required this.authBloc, this.callStatus, this.roomId});
+  CallScreen({
+    Key? key,
+    required this.initialCallStatus,
+    required this.avatar,
+    required this.receiverName,
+    required this.roomId,
+    required this.currentUserId,
+    required this.receiverUserId,
+    required this.authBloc,
+  }) : super(key: key);
 
   @override
-  _CallAcceptDeclinePageState createState() => _CallAcceptDeclinePageState();
+  _CallScreenState createState() => _CallScreenState();
 }
 
-class _CallAcceptDeclinePageState extends State<CallAcceptDeclinePage> {
-  late DuringCallStatus callStatus;
-
-  List<IconData> bottomSheetIcons = [
-    Icons.speaker_phone,
-    Icons.bluetooth,
-    Icons.video_call,
-    Icons.mic_off_sharp,
-    Icons.call_end,
-  ];
-  WebRtcManager webrtcService = WebRtcManager();
-  final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
-  final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
-  String? roomId;
-
-  initializeWebRTC() async {
-    _localRenderer.initialize();
-    _remoteRenderer.initialize();
-
-    webrtcService.onAddRemoteStream = ((stream) {
-      _remoteRenderer.srcObject = stream;
-      setState(() {});
-    });
-
-    webrtcService.openUserMedia(_localRenderer, _remoteRenderer);
-    if (callStatus == DuringCallStatus.calling) {
-      roomId = await webrtcService.createRoom(_remoteRenderer);
-      debugPrint("roomID: $roomId");
-      // Api.sendNotificationRequestToFriendToAcceptCall(roomId!, widget.user);
-    } else {
-      roomId = widget.roomId;
-      webrtcService.joinRoom(
-        roomId!,
-        _remoteRenderer,
-      );
-    }
-
-    if (kDebugMode) {
-      print("connected successfully");
-    }
-  }
+class _CallScreenState extends State<CallScreen> {
+  late DuringCallStatus _callStatus;
+  late AudioSignaling _signaling;
+  final FlutterRingtonePlayer ringtonePlayer = FlutterRingtonePlayer();
+  Timer? _callTimer;
 
   @override
   void initState() {
-    callStatus = widget.callStatus ?? DuringCallStatus.calling;
-    initializeWebRTC();
     super.initState();
+    _callStatus = widget.initialCallStatus;
+    _signaling = AudioSignaling();
+
+    _startRinging();
+    _startCallTimeout();
+
+    // Listen for hangup from the other side
+    _signaling.roomSubscription = FirebaseFirestore.instance
+        .collection('rooms')
+        .doc(widget.roomId)
+        .snapshots()
+        .listen((snapshot) {
+      var data = snapshot.data() as Map<String, dynamic>;
+      if (data['hangup'] == true) {
+        _hangUpLocal();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _localRenderer.dispose();
-    _remoteRenderer.dispose();
-    webrtcService.hangUp(_localRenderer);
+    _callTimer?.cancel();
+    ringtonePlayer.stop();
+    _signaling.roomSubscription?.cancel();
     super.dispose();
   }
 
-  Widget getBody() {
-    switch (callStatus) {
-      case DuringCallStatus.calling:
-        return Center(
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 100,
-              ),
-              Column(
-                children: [
-                  const CustomCircularImage(
-                    size: 150,
-                    avatar: "",
-                    userName: "",
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  Text(
-                    widget.authBloc.getCurrentUserName().toString(),
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  const Text(
-                    "Calling...",
-                    style: TextStyle(
-                        color: Colors.white,
-                        shadows: [
-                          BoxShadow(color: Colors.black, blurRadius: 3)
-                        ],
-                        fontSize: 16),
-                  )
-                ],
-              ),
-            ],
-          ),
-        );
-      case DuringCallStatus.accepted:
-        return Center(
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 100,
-              ),
-              Column(
-                children: [
-                  const CustomCircularImage(
-                    size: 150,
-                    avatar: "",
-                    userName: "",
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  Text(
-                    widget.authBloc.getCurrentUserName().toString(),
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  const CountDownDialer(
-                    style: TextStyle(
-                        color: Colors.white,
-                        shadows: [
-                          BoxShadow(color: Colors.black, blurRadius: 3)
-                        ],
-                        fontSize: 16),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      case DuringCallStatus.ringing:
-        return Column(
-          children: [
-            const Spacer(),
-            Column(
-              children: [
-                const CustomCircularImage(
-                  size: 150,
-                  avatar: "",
-                  userName: "",
-                ),
-                const SizedBox(
-                  height: 16,
-                ),
-                Text(
-                  widget.authBloc.getCurrentUserName().toString(),
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(
-                  height: 8,
-                ),
-                const Text(
-                  "Calling...",
-                  style: TextStyle(
-                      color: Colors.white,
-                      shadows: [BoxShadow(color: Colors.black, blurRadius: 3)],
-                      fontSize: 16),
-                )
-              ],
-            ),
-            const SizedBox(
-              height: 60,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Column(
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: const BoxDecoration(
-                          color: AppPallete.gradient2, shape: BoxShape.circle),
-                      child: const Icon(Icons.phone, color: Colors.white),
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    const Text(
-                      "Accept",
-                      style: TextStyle(color: Colors.white),
-                    )
-                  ],
-                ),
-                Column(
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: const BoxDecoration(
-                          color: Colors.redAccent, shape: BoxShape.circle),
-                      child: const Icon(Icons.phone_callback_sharp,
-                          color: Colors.white),
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    const Text(
-                      "Decline",
-                      style: TextStyle(color: Colors.white),
-                    )
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 60,
-            ),
-            const Text(
-              "Decline & Send Message",
-              style: TextStyle(color: Colors.white60, fontSize: 14),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 1.0, sigmaY: 1.0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.75,
-                  decoration: BoxDecoration(
-                      color: Colors.grey.shade200.withOpacity(0.2),
-                      borderRadius:
-                          const BorderRadius.all(Radius.circular(20))),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: const [
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          "I'll call you back",
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          "Sorry, I can't talk right now",
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 80,
-            ),
-          ],
-        );
+  void _startRinging() {
+    if (_callStatus == DuringCallStatus.ringing) {
+      ringtonePlayer.playRingtone();
     }
+  }
+
+  void _stopRinging() {
+    ringtonePlayer.stop();
+  }
+
+  void _startCallTimeout() {
+    _callTimer = Timer(Duration(seconds: 60), () {
+      if (_callStatus != DuringCallStatus.accepted) {
+        _hangUp();
+      }
+    });
+  }
+
+  void _hangUp() {
+    _signaling.hangUp(widget.roomId).then((_) {
+      setState(() {
+        _callStatus = DuringCallStatus.declined;
+      });
+      _stopRinging();
+      Navigator.pushAndRemoveUntil(context,
+          MaterialPageRoute(builder: (BuildContext context) {
+        return HomePage(
+          authBloc: widget.authBloc,
+        );
+      }), (r) {
+        return false;
+      });
+    });
+  }
+
+  void _hangUpLocal() {
+    setState(() {
+      _callStatus = DuringCallStatus.declined;
+    });
+    _stopRinging();
+    Navigator.pushAndRemoveUntil(context,
+        MaterialPageRoute(builder: (BuildContext context) {
+      return HomePage(
+        authBloc: widget.authBloc,
+      );
+    }), (r) {
+      return false;
+    });
+  }
+
+  void _acceptCall() async {
+    await _signaling.openUserMedia();
+    if (await PermsHandler().microphone()) {
+      _signaling.joinRoom(widget.roomId).then((_) {
+        setState(() {
+          _callStatus = DuringCallStatus.accepted;
+        });
+      });
+    }
+    _stopRinging();
+  }
+
+  void _declineCall() {
+    _hangUp();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            height: MediaQuery.of(context).size.height,
-            width: MediaQuery.of(context).size.width,
-            decoration: BoxDecoration(
-                image: 'a' == null
-                    ? null
-                    : DecorationImage(
-                        image: NetworkImage('widget.user.picture'!),
-                        fit: BoxFit.cover)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
-              child: Container(
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.0)),
-              ),
-            ),
-          ),
-          getBody(),
-          SlidingUpPanel(
-            panel: Container(
-              color: Colors.black87,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                    bottomSheetIcons.length,
-                    (index) => Icon(
-                          bottomSheetIcons[index],
-                          color: index == 4 ? Colors.redAccent : Colors.white,
-                        )),
-              ),
-            ),
-            minHeight: 90,
-            maxHeight: 200,
-            collapsed: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12.0),
-                  topRight: Radius.circular(12.0),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                    bottomSheetIcons.length,
-                    (index) => Icon(
-                          bottomSheetIcons[index],
-                          color: index == 4 ? Colors.redAccent : Colors.white,
-                        )),
-              ),
-            ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12.0),
-              topRight: Radius.circular(12.0),
-            ),
-          )
-        ],
+      appBar: AppBar(
+        title: Text('Call with ${widget.receiverName}'),
       ),
+      body: Center(
+        child: _buildCallUI(),
+      ),
+    );
+  }
+
+  Widget _buildCallUI() {
+    switch (_callStatus) {
+      case DuringCallStatus.calling:
+        return _buildCallingUI();
+      case DuringCallStatus.accepted:
+        return _buildAcceptedUI();
+      case DuringCallStatus.ringing:
+        return _buildRingingUI();
+      case DuringCallStatus.declined:
+        return _buildDeclinedUI();
+      default:
+        return _buildUnknownStateUI();
+    }
+  }
+
+  Widget _buildCallingUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          backgroundImage: NetworkImage(widget.avatar),
+          radius: 50,
+        ),
+        SizedBox(height: 20),
+        Text(
+          'Calling ${widget.receiverName}...',
+          style: TextStyle(fontSize: 24),
+        ),
+        SizedBox(height: 20),
+        CircularProgressIndicator(),
+      ],
+    );
+  }
+
+  Widget _buildAcceptedUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          backgroundImage: NetworkImage(widget.avatar),
+          radius: 50,
+        ),
+        SizedBox(height: 20),
+        Text(
+          'In Call with ${widget.receiverName}',
+          style: TextStyle(fontSize: 24),
+        ),
+        SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: _hangUp,
+          child: Text('End Call'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRingingUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          backgroundImage: NetworkImage(widget.avatar),
+          radius: 50,
+        ),
+        SizedBox(height: 20),
+        Text(
+          '${widget.receiverName} is calling...',
+          style: TextStyle(fontSize: 24),
+        ),
+        SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: _acceptCall,
+              child: Text('Accept'),
+            ),
+            SizedBox(width: 20),
+            ElevatedButton(
+              onPressed: _declineCall,
+              child: Text('Decline'),
+              // style: ElevatedButton.styleFrom(primary: Colors.red),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeclinedUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          backgroundImage: NetworkImage(widget.avatar),
+          radius: 50,
+        ),
+        SizedBox(height: 20),
+        Text(
+          'Call with ${widget.receiverName} was declined',
+          style: TextStyle(fontSize: 24),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnknownStateUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Unknown call state',
+          style: TextStyle(fontSize: 24, color: Colors.red),
+        ),
+      ],
     );
   }
 }

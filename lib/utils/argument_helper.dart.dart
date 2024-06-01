@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:blog/authentication.dart';
+import 'package:blog/constants.dart';
 
 class SendImageArguments {
   final File image;
@@ -71,6 +72,7 @@ class CallArguments {
   final String roomId;
   final String currentUserId;
   final String receiverUserId;
+  final DuringCallStatus callStatus;
 
   CallArguments({
     required this.avatar,
@@ -79,5 +81,6 @@ class CallArguments {
     required this.roomId,
     required this.currentUserId,
     required this.receiverUserId,
+    required this.callStatus,
   });
 }

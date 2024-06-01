@@ -7,6 +7,7 @@ import 'package:blog/utils/chat_service.dart';
 import 'package:blog/utils/encryption_helper.dart';
 import 'package:blog/utils/file_picker_helper.dart';
 import 'package:blog/utils/message_sender_helper.dart';
+import 'package:blog/utils/perms_handler.dart';
 import 'package:blog/widgets/build_message_content.dart';
 import 'package:blog/widgets/chat_send_file.dart';
 import 'package:blog/widgets/text_filed.dart';
@@ -141,14 +142,6 @@ class _ChatPageState extends State<ChatPage> {
     return currentUserId;
   }
 
-  Future<bool> _requestPermissions() async {
-    final statuses = await [
-      Permission.microphone,
-    ].request();
-
-    return statuses[Permission.microphone]!.isGranted;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,7 +191,7 @@ class _ChatPageState extends State<ChatPage> {
                   onPressed: () async {
                     try {
                       await signaling.openUserMedia();
-                      if (await _requestPermissions()) {
+                      if (await PermsHandler().microphone()) {
                         final roomId = await signaling.createRoom();
                         print("created a room");
                         final arguments = CallArguments(
@@ -207,6 +200,7 @@ class _ChatPageState extends State<ChatPage> {
                           receiverName: receiverUserName,
                           roomId: roomId,
                           currentUserId: widget.currentUserId,
+                          callStatus: DuringCallStatus.calling,
                           receiverUserId: widget.receiverUserId,
                         );
                         await MessageHelper().sendCallNotification(
@@ -215,7 +209,7 @@ class _ChatPageState extends State<ChatPage> {
                         if (roomId.isNotEmpty) {
                           await Navigator.pushNamed(
                             context,
-                            '/call',
+                            '/call-accept-and-decline',
                             arguments: arguments,
                           );
                         }

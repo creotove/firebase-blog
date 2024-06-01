@@ -22,7 +22,6 @@ class AudioSignaling {
   MediaStream? localStream;
   MediaStream? remoteStream;
   String? roomId;
-  String? currentRoomText;
   StreamStateCallback? onAddRemoteStream;
   StreamSubscription<DocumentSnapshot>? roomSubscription;
   StreamSubscription<QuerySnapshot>? calleeCandidatesSubscription;
@@ -71,8 +70,8 @@ class AudioSignaling {
       await roomRef.update({'hangup': true});
     }
 
-    localStream?.dispose();
-    remoteStream?.dispose();
+    await localStream?.dispose();
+    await remoteStream?.dispose();
   }
 
   Future<String> createRoom() async {

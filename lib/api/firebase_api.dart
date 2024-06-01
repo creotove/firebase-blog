@@ -1,6 +1,9 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 
 import 'package:blog/authentication.dart';
+import 'package:blog/constants.dart';
 import 'package:blog/features/screens/chat/call/audio_signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/context_utility_service.dart';
@@ -82,7 +85,7 @@ class FirebaseApi {
           );
           ContextUtilityService.navigatorKey.currentState
               ?.pushNamed(route, arguments: myArgs);
-        } else if (route == '/call') {
+        } else if (route == '/call-accept-and-decline') {
           final roomId = message.data['roomId'];
           final avatar = message.data['avatar'];
           final receiverName = message.data['receiverName'];
@@ -92,9 +95,9 @@ class FirebaseApi {
             receiverName: receiverName,
             roomId: roomId,
             currentUserId: receiverUserId.toString(),
+            callStatus: DuringCallStatus.ringing,
             receiverUserId: senderUserId,
           );
-          await AudioSignaling().joinRoom(roomId);
           await ContextUtilityService.navigatorKey.currentState
               ?.pushNamed(route, arguments: callArgs);
         }
