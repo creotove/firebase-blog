@@ -1,10 +1,12 @@
+// ignore_for_file: avoid_print, avoid_function_literals_in_foreach_calls
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 typedef StreamStateCallback = void Function(MediaStream stream);
 
 class Signaling {
-  Map<String, dynamic> _configuration = {
+  final Map<String, dynamic> _configuration = {
     'iceServers': [
       {
         'urls': [
@@ -40,9 +42,9 @@ class Signaling {
 
   Future<void> hangUp(RTCVideoRenderer localVideo) async {
     List<MediaStreamTrack> tracks = localVideo.srcObject!.getTracks();
-    tracks.forEach((track) {
+    for (var track in tracks) {
       track.stop();
-    });
+    }
 
     if (remoteStream != null) {
       remoteStream!.getTracks().forEach((track) {
@@ -73,7 +75,7 @@ class Signaling {
 
   Future<String> createRoom(RTCVideoRenderer remoteRenderer) async {
     FirebaseFirestore db = FirebaseFirestore.instance;
-    DocumentReference roomRef = await db.collection('rooms').doc();
+    DocumentReference roomRef = db.collection('rooms').doc();
 
     print('Create PeerConnection with configuration: $_configuration');
 
@@ -114,7 +116,7 @@ class Signaling {
     });
 
     roomRef.collection('calleeCandidates').snapshots().listen((snapshots) {
-      snapshots.docChanges.forEach((change) {
+      for (var change in snapshots.docChanges) {
         if (change.type == DocumentChangeType.added) {
           Map<String, dynamic> data = change.doc.data() as Map<String, dynamic>;
           print('Got new remote ICE candidate: $data');
@@ -124,7 +126,7 @@ class Signaling {
             data['sdpMLineIndex'],
           ));
         }
-      });
+      }
     });
 
     return roomRef.id;
@@ -179,20 +181,18 @@ class Signaling {
 
       roomRef.collection('callerCandidates').snapshots().listen(
         (snapshots) {
-          snapshots.docChanges.forEach(
-            (change) {
-              if (change.type == DocumentChangeType.added) {
-                Map<String, dynamic> data =
-                    change.doc.data() as Map<String, dynamic>;
-                print('Got new remote ICE candidate: $data');
-                peerConnection?.addCandidate(RTCIceCandidate(
-                  data['candidate'],
-                  data['sdpMid'],
-                  data['sdpMLineIndex'],
-                ));
-              }
-            },
-          );
+          for (var change in snapshots.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              Map<String, dynamic> data =
+                  change.doc.data() as Map<String, dynamic>;
+              print('Got new remote ICE candidate: $data');
+              peerConnection?.addCandidate(RTCIceCandidate(
+                data['candidate'],
+                data['sdpMid'],
+                data['sdpMLineIndex'],
+              ));
+            }
+          }
         },
       );
     }

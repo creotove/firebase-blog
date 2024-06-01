@@ -104,7 +104,7 @@ class _VideoCallState extends State<VideoCall> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Join the following room:"),
+                const Text("Join the following room:"),
                 Flexible(
                   child: TextFormField(controller: textEditingController),
                 ),

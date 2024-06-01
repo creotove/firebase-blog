@@ -214,7 +214,7 @@
 //   }
 // }
 
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ignore_for_file: public_member_api_docs, sort_constructors_first, use_build_context_synchronously
 import 'package:blog/theme/app_pallete.dart';
 import 'package:blog/utils/truncate_content.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
@@ -17,8 +19,8 @@ class CallScreen extends StatefulWidget {
   final String currentUserId;
   final String receiverUserId;
 
-  CallScreen({
-    Key? key,
+  const CallScreen({
+    super.key,
     required this.initialCallStatus,
     required this.avatar,
     required this.receiverName,
@@ -26,7 +28,7 @@ class CallScreen extends StatefulWidget {
     required this.currentUserId,
     required this.receiverUserId,
     required this.authBloc,
-  }) : super(key: key);
+  });
 
   @override
   _CallScreenState createState() => _CallScreenState();
@@ -79,7 +81,7 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   void _startCallTimeout() {
-    _callTimer = Timer(Duration(seconds: 60), () {
+    _callTimer = Timer(const Duration(seconds: 60), () {
       if (_callStatus != DuringCallStatus.accepted) {
         _hangUp();
       }
@@ -169,13 +171,13 @@ class _CallScreenState extends State<CallScreen> {
           backgroundImage: NetworkImage(widget.avatar),
           radius: 50,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text(
           'Calling ${widget.receiverName}...',
-          style: TextStyle(fontSize: 24),
+          style: const TextStyle(fontSize: 24),
         ),
-        SizedBox(height: 20),
-        CircularProgressIndicator(),
+        const SizedBox(height: 20),
+        const CircularProgressIndicator(),
       ],
     );
   }
@@ -188,15 +190,15 @@ class _CallScreenState extends State<CallScreen> {
           backgroundImage: NetworkImage(widget.avatar),
           radius: 50,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text(
           'In Call with ${widget.receiverName}',
-          style: TextStyle(fontSize: 24),
+          style: const TextStyle(fontSize: 24),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         ElevatedButton(
           onPressed: _hangUp,
-          child: Text('End Call'),
+          child: const Text('End Call'),
         ),
       ],
     );
@@ -210,23 +212,23 @@ class _CallScreenState extends State<CallScreen> {
           backgroundImage: NetworkImage(widget.avatar),
           radius: 50,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text(
           '${widget.receiverName} is calling...',
-          style: TextStyle(fontSize: 24),
+          style: const TextStyle(fontSize: 24),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
               onPressed: _acceptCall,
-              child: Text('Accept'),
+              child: const Text('Accept'),
             ),
-            SizedBox(width: 20),
+            const SizedBox(width: 20),
             ElevatedButton(
               onPressed: _declineCall,
-              child: Text('Decline'),
+              child: const Text('Decline'),
               // style: ElevatedButton.styleFrom(primary: Colors.red),
             ),
           ],
@@ -243,17 +245,17 @@ class _CallScreenState extends State<CallScreen> {
           backgroundImage: NetworkImage(widget.avatar),
           radius: 50,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text(
           'Call with ${widget.receiverName} was declined',
-          style: TextStyle(fontSize: 24),
+          style: const TextStyle(fontSize: 24),
         ),
       ],
     );
   }
 
   Widget _buildUnknownStateUI() {
-    return Column(
+    return const Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(

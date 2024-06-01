@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -48,10 +50,12 @@ class AudioSignaling {
     peerConnection = null;
 
     if (roomSubscription != null) await roomSubscription!.cancel();
-    if (calleeCandidatesSubscription != null)
+    if (calleeCandidatesSubscription != null) {
       await calleeCandidatesSubscription!.cancel();
-    if (callerCandidatesSubscription != null)
+    }
+    if (callerCandidatesSubscription != null) {
       await callerCandidatesSubscription!.cancel();
+    }
 
     if (roomId.isNotEmpty) {
       FirebaseFirestore db = FirebaseFirestore.instance;
@@ -119,10 +123,11 @@ class AudioSignaling {
           data['answer']['sdp'],
           data['answer']['type'],
         );
-        if (answer.sdp != '' && answer.sdp != null)
+        if (answer.sdp != '' && answer.sdp != null) {
           await peerConnection!.setRemoteDescription(answer);
-        else
+        } else {
           print('Answer is null');
+        }
       }
     });
 

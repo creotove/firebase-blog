@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api, deprecated_member_use
+
 import 'package:flutter/widgets.dart';
 
 class CountDownDialer extends StatefulWidget {
@@ -19,7 +21,7 @@ class CountDownDialer extends StatefulWidget {
   final String suffix;
 
   const CountDownDialer({
-    Key? key,
+    super.key,
     this.begin = 0,
     this.end = 86400,
     this.precision = 0,
@@ -36,7 +38,7 @@ class CountDownDialer extends StatefulWidget {
     this.semanticsLabel,
     this.prefix = '',
     this.suffix = '',
-  }) : super(key: key);
+  });
 
   @override
   _CountDownDialerState createState() => _CountDownDialerState();
@@ -115,7 +117,7 @@ class _CountDownDialerAnimatedText extends AnimatedWidget {
   final String? suffix;
 
   _CountDownDialerAnimatedText({
-    Key? key,
+    super.key,
     required this.animation,
     required this.precision,
     this.style,
@@ -129,7 +131,7 @@ class _CountDownDialerAnimatedText extends AnimatedWidget {
     this.semanticsLabel,
     this.prefix,
     this.suffix,
-  }) : super(key: key, listenable: animation);
+  }) : super(listenable: animation);
 
   String _printDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");

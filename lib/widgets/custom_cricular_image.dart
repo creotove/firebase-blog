@@ -19,7 +19,7 @@ class CustomCircularImage extends StatelessWidget {
       decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: avatar.isEmpty ? Colors.grey : Colors.transparent,
-          image: !avatar.isEmpty
+          image: avatar.isNotEmpty
               ? null
               : DecorationImage(image: NetworkImage(avatar))),
       child: avatar.isEmpty
