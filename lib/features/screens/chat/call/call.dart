@@ -40,7 +40,7 @@ class _CallPageState extends State<CallPage> {
   @override
   void dispose() {
     if (!_isHangingUp) {
-      signaling.hangUp(widget.roomId);
+      // signaling.hangUp(widget.roomId);
     }
     super.dispose();
   }
@@ -48,7 +48,7 @@ class _CallPageState extends State<CallPage> {
   Future<void> _hangUp() async {
     if (!_isHangingUp) {
       _isHangingUp = true;
-      await signaling.hangUp(widget.roomId);
+      // await signaling.hangUp(widget.roomId);
     }
   }
 

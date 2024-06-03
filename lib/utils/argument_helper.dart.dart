@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 class SendImageArguments {
   final File image;
