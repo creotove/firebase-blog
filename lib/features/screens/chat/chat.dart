@@ -14,7 +14,6 @@ import 'package:blog/widgets/text_filed.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:blog/authentication.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ChatPage extends StatefulWidget {
@@ -190,7 +189,7 @@ class _ChatPageState extends State<ChatPage> {
                   icon: const Icon(Icons.call),
                   onPressed: () async {
                     try {
-                      await signaling.openUserMedia();
+                      final localStream = await signaling.openUserMedia();
                       if (await PermsHandler().microphone()) {
                         final roomId = await signaling.createRoom();
                         print("created a room");
@@ -202,6 +201,7 @@ class _ChatPageState extends State<ChatPage> {
                           currentUserId: widget.currentUserId,
                           callStatus: DuringCallStatus.calling,
                           receiverUserId: widget.receiverUserId,
+                          localStream: localStream,
                         );
                         await MessageHelper().sendCallNotification(
                             widget.receiverUserId, roomId);

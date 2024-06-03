@@ -31,18 +31,23 @@ class AudioSignaling {
   bool isConnectionClosed = false;
 
   Future<MediaStream> openUserMedia() async {
-    localStream = await navigator.mediaDevices.getUserMedia({'audio': true});
-    return localStream!;
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({'audio': true});
+      return localStream!;
+    } catch (e) {
+      print(e.toString());
+      throw e;
+    }
   }
 
   Future<void> hangUp(
     String roomId,
-    // MediaStream localStream,
+    MediaStream localStream,
   ) async {
     try {
       isConnectionClosed = true;
 
-      localStream?.getTracks().forEach((track) {
+      localStream.getTracks().forEach((track) {
         track.stop();
       });
 
@@ -61,7 +66,7 @@ class AudioSignaling {
         await callerCandidatesSubscription!.cancel();
       }
 
-      if (roomId!.isNotEmpty) {
+      if (roomId.isNotEmpty) {
         FirebaseFirestore db = FirebaseFirestore.instance;
         DocumentReference roomRef = db.collection('rooms').doc(roomId);
 
@@ -80,7 +85,7 @@ class AudioSignaling {
         await roomRef.delete();
       }
 
-      await localStream?.dispose();
+      await localStream.dispose();
       await remoteStream?.dispose();
 
       remoteStream = null; // Make sure to set remoteStream to null
@@ -136,6 +141,7 @@ class AudioSignaling {
           print('Room ID: ${roomRef.id}');
           await hangUp(
             roomRef.id,
+            localStream!,
           );
         }
       });
@@ -181,9 +187,12 @@ class AudioSignaling {
     }
   }
 
-  Future<void> joinRoom(String roomId) async {
+  Future<void> joinRoom(
+    String roomId,
+  ) async {
     try {
       this.roomId = roomId; // Set roomId here
+      this.remoteStream = remoteStream;
 
       FirebaseFirestore db = FirebaseFirestore.instance;
       DocumentReference roomRef = db.collection('rooms').doc(roomId);
@@ -239,6 +248,7 @@ class AudioSignaling {
           if (data['hangup'] == true) {
             await hangUp(
               roomRef.id,
+              localStream!,
             );
           }
         });

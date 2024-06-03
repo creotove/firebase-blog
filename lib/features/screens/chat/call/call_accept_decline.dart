@@ -7,6 +7,7 @@ import 'package:blog/utils/perms_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'audio_signaling.dart';
 import 'dart:async';
 
@@ -18,6 +19,7 @@ class CallScreen extends StatefulWidget {
   final String roomId;
   final String currentUserId;
   final String receiverUserId;
+  final MediaStream? localStream;
 
   const CallScreen({
     super.key,
@@ -28,6 +30,7 @@ class CallScreen extends StatefulWidget {
     required this.currentUserId,
     required this.receiverUserId,
     required this.authBloc,
+    this.localStream,
   });
 
   @override
@@ -62,9 +65,6 @@ class _CallScreenState extends State<CallScreen> {
       }
       var data = snapshot.data() as Map<String, dynamic>;
       if (data['hangup'] == true) {
-        print('================================================');
-        print('Hanging up 2');
-        print('================================================');
         _hangUpLocal();
       }
       if (data['pickedUp'] == true) {
@@ -104,11 +104,17 @@ class _CallScreenState extends State<CallScreen> {
   Future<void> _hangUp() async {
     await _signaling.hangUp(
       widget.roomId,
-      // widget.localStream,
-      // remoteStream,
+      widget.localStream!,
     );
     _stopRinging();
-    Navigator.of(context).pop(true);
+    await Navigator.pushAndRemoveUntil(context,
+        MaterialPageRoute(builder: (BuildContext context) {
+      return HomePage(
+        authBloc: widget.authBloc,
+      );
+    }), (r) {
+      return false;
+    });
   }
 
   Future<bool> _onWillPop() async {
@@ -137,12 +143,13 @@ class _CallScreenState extends State<CallScreen> {
   void _hangUpLocal() async {
     await _signaling.hangUp(
       widget.roomId,
+      widget.localStream!,
     );
     setState(() {
       _callStatus = DuringCallStatus.declined;
     });
     _stopRinging();
-    Navigator.pushAndRemoveUntil(context,
+    await Navigator.pushAndRemoveUntil(context,
         MaterialPageRoute(builder: (BuildContext context) {
       return HomePage(
         authBloc: widget.authBloc,

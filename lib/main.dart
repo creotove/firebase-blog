@@ -251,6 +251,7 @@ class _MyAppState extends State<MyApp> {
                 currentUserId: args.currentUserId,
                 receiverUserId: args.receiverUserId,
                 initialCallStatus: args.callStatus,
+                localStream: args.localStream,
               );
             } else {
               return SignInPage(authBloc: widget.authBloc);

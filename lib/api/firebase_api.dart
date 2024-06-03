@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
+import 'package:blog/features/screens/chat/call/audio_signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/context_utility_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -88,15 +89,16 @@ class FirebaseApi {
           final roomId = message.data['roomId'];
           final avatar = message.data['avatar'];
           final receiverName = message.data['receiverName'];
+          final localStream = await AudioSignaling().openUserMedia();
           final callArgs = CallArguments(
-            authBloc: AuthenticationBloc(),
-            avatar: avatar,
-            receiverName: receiverName,
-            roomId: roomId,
-            currentUserId: receiverUserId.toString(),
-            callStatus: DuringCallStatus.ringing,
-            receiverUserId: senderUserId,
-          );
+              authBloc: AuthenticationBloc(),
+              avatar: avatar,
+              receiverName: receiverName,
+              roomId: roomId,
+              currentUserId: receiverUserId.toString(),
+              callStatus: DuringCallStatus.ringing,
+              receiverUserId: senderUserId,
+              localStream: localStream);
           await ContextUtilityService.navigatorKey.currentState
               ?.pushNamed(route, arguments: callArgs);
         }
