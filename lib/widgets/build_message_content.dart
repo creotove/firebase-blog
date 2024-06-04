@@ -39,7 +39,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -65,7 +68,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -86,7 +92,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -107,7 +116,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -134,7 +146,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -161,7 +176,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -188,7 +206,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -208,15 +229,12 @@ class BuildMessageContent extends StatelessWidget {
                       imageUrl: message['imageUrl'],
                       height: 200.0,
                       width: 200.0,
-                      progressIndicatorBuilder:
-                          (context, url, downloadProgress) => SizedBox(
+                      progressIndicatorBuilder: (context, url, downloadProgress) => SizedBox(
                         height: 50.0,
                         width: 50.0,
-                        child: LinearProgressIndicator(
-                            value: downloadProgress.progress),
+                        child: LinearProgressIndicator(value: downloadProgress.progress),
                       ),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
+                      errorWidget: (context, url, error) => const Icon(Icons.error),
                     ),
                   ),
                 ],
@@ -232,7 +250,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -258,15 +279,12 @@ class BuildMessageContent extends StatelessWidget {
                       imageUrl: message['imageUrl'],
                       height: 200.0,
                       width: 200.0,
-                      progressIndicatorBuilder:
-                          (context, url, downloadProgress) => SizedBox(
+                      progressIndicatorBuilder: (context, url, downloadProgress) => SizedBox(
                         height: 50.0,
                         width: 50.0,
-                        child: LinearProgressIndicator(
-                            value: downloadProgress.progress),
+                        child: LinearProgressIndicator(value: downloadProgress.progress),
                       ),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
+                      errorWidget: (context, url, error) => const Icon(Icons.error),
                     ),
                   ),
                 ],
@@ -288,7 +306,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -315,7 +336,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -331,7 +355,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -355,7 +382,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -377,7 +407,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -407,7 +440,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -434,7 +470,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -451,7 +490,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -482,7 +524,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -505,7 +550,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -542,7 +590,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -569,7 +620,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),
@@ -595,7 +649,10 @@ class BuildMessageContent extends StatelessWidget {
                   color: Colors.blue,
                   gradient: isMe
                       ? const LinearGradient(
-                          colors: [AppPallete.gradient1, AppPallete.gradient2],
+                          colors: [
+                            AppPallete.gradient1,
+                            AppPallete.gradient2
+                          ],
                         )
                       : null,
                   borderRadius: BorderRadius.circular(10),

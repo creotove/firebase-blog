@@ -75,6 +75,7 @@ class CallArguments {
   final String receiverUserId;
   final DuringCallStatus callStatus;
   final MediaStream? localStream;
+  final MediaStream? remoteStream;
 
   CallArguments({
     required this.avatar,
@@ -85,5 +86,6 @@ class CallArguments {
     required this.receiverUserId,
     required this.callStatus,
     this.localStream,
+    this.remoteStream,
   });
 }

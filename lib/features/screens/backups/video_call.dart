@@ -3,15 +3,15 @@
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
+import 'package:blog/features/screens/chat/videoCall/video_call_signaling.dart';
 import 'package:blog/utils/perms_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'audio_signaling.dart';
 import 'dart:async';
 
-class CallScreen extends StatefulWidget {
+class VideoCallPage extends StatefulWidget {
   final AuthenticationBloc authBloc;
   final DuringCallStatus initialCallStatus;
   final String avatar;
@@ -20,8 +20,9 @@ class CallScreen extends StatefulWidget {
   final String currentUserId;
   final String receiverUserId;
   final MediaStream? localStream;
+  final RTCVideoRenderer? localRenderer;
 
-  const CallScreen({
+  const VideoCallPage({
     super.key,
     required this.initialCallStatus,
     required this.avatar,
@@ -31,16 +32,19 @@ class CallScreen extends StatefulWidget {
     required this.receiverUserId,
     required this.authBloc,
     this.localStream,
+    this.localRenderer,
   });
 
   @override
-  _CallScreenState createState() => _CallScreenState();
+  _VideoCallPageState createState() => _VideoCallPageState();
 }
 
-class _CallScreenState extends State<CallScreen> {
+class _VideoCallPageState extends State<VideoCallPage> {
   late DuringCallStatus _callStatus;
-  final AudioSignaling _signaling = AudioSignaling();
+  final VideoSignaling _signaling = VideoSignaling();
   final FlutterRingtonePlayer ringtonePlayer = FlutterRingtonePlayer();
+  late final RTCVideoRenderer _localRenderer;
+
   Timer? _callTimer;
 
   @override
@@ -48,8 +52,10 @@ class _CallScreenState extends State<CallScreen> {
     super.initState();
     _callStatus = widget.initialCallStatus;
 
-    _startRinging();
-    _startCallTimeout();
+    _localRenderer = RTCVideoRenderer();
+    _localRenderer.initialize().then((_) {
+      // _signaling.localRenderer = _localRenderer;
+    });
 
     // Listen for hangup from the other side
     _signaling.roomSubscription = FirebaseFirestore.instance.collection('rooms').doc(widget.roomId).snapshots().listen((snapshot) {
@@ -76,6 +82,7 @@ class _CallScreenState extends State<CallScreen> {
     _callTimer?.cancel();
     ringtonePlayer.stop();
     _signaling.roomSubscription?.cancel();
+    _localRenderer.dispose();
     super.dispose();
   }
 
@@ -98,10 +105,10 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Future<void> _hangUp() async {
-    await _signaling.hangUp(
-      widget.roomId,
-      widget.localStream!,
-    );
+    // await _signaling.hangUp(
+    //   widget.roomId,
+    //   widget.localStream!,
+    // );
     _stopRinging();
     await Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context) {
       return HomePage(
@@ -138,10 +145,10 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   void _hangUpLocal() async {
-    await _signaling.hangUp(
-      widget.roomId,
-      widget.localStream!,
-    );
+    // await _signaling.hangUp(
+    //   widget.roomId,
+    //   widget.localStream!,
+    // );
     setState(() {
       _callStatus = DuringCallStatus.declined;
     });
@@ -156,12 +163,12 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   void _acceptCall() async {
-    if (await PermsHandler().microphone()) {
-      _signaling.joinRoom(widget.roomId).then((_) {
-        setState(() {
-          _callStatus = DuringCallStatus.accepted;
-        });
-      });
+    if (await PermsHandler().camera()) {
+      // _signaling.joinRoom(widget.roomId,remoteRender).then((_) {
+      // setState(() {
+      //   _callStatus = DuringCallStatus.accepted;
+      // });
+      // });
     }
     _stopRinging();
   }
@@ -176,7 +183,7 @@ class _CallScreenState extends State<CallScreen> {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Call with ${widget.receiverName}'),
+          title: Text('Video Call with ${widget.receiverName}'),
         ),
         body: Center(
           child: _buildCallUI(),
@@ -229,8 +236,24 @@ class _CallScreenState extends State<CallScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          'In Call with ${widget.receiverName}',
+          'In Video Call with ${widget.receiverName}',
           style: const TextStyle(fontSize: 24),
+        ),
+        const SizedBox(height: 20),
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                child: RTCVideoView(_localRenderer),
+              ),
+              // _signaling.remoteRenderer == null
+              // ? const SizedBox()
+              // : Expanded(
+              // child: RTCVideoView(_signaling.remoteRenderer!),
+              // ),
+            ],
+          ),
         ),
         const SizedBox(height: 20),
         ElevatedButton(
@@ -283,7 +306,7 @@ class _CallScreenState extends State<CallScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          'Call with ${widget.receiverName} was declined',
+          'Video Call with ${widget.receiverName} was declined',
           style: const TextStyle(fontSize: 24),
         ),
       ],

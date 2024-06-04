@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_print
 
+import 'package:blog/features/screens/backups/call.dart';
+import 'package:blog/features/screens/backups/video_call.dart';
 import 'package:blog/features/screens/blog/add_blog_page.dart';
 import 'package:blog/features/screens/blog/blog_edit.dart';
 import 'package:blog/features/screens/blog/blog_view_page.dart';
@@ -7,14 +9,13 @@ import 'package:blog/features/screens/blog/comments/manage_comments.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
 import 'package:blog/features/screens/auth/sign_in_page.dart';
 import 'package:blog/features/screens/auth/sign_up_page.dart';
-import 'package:blog/features/screens/chat/call/call.dart';
 import 'package:blog/features/screens/chat/call/call_accept_decline.dart';
 import 'package:blog/features/screens/chat/chat.dart';
 import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendAudio.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendDocument.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendImage.dart';
-import 'package:blog/features/screens/chat/videoCall/video_call.dart';
+import 'package:blog/features/screens/chat/videoCall/video_call_accept_decline.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendVideo.dart';
 import 'package:blog/features/screens/chat/show_send_image.dart';
@@ -34,8 +35,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     // Initialize the Firebase app
-    await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
     final authBloc = AuthenticationBloc();
     // Run the app with the AuthenticationBloc
@@ -68,8 +68,7 @@ class _MyAppState extends State<MyApp> {
           final queryParams = deepLink.queryParameters;
           if (queryParams.containsKey('blogId')) {
             final blogId = queryParams['blogId'];
-            Navigator.pushNamed(ContextUtilityService.context!, '/blog-view',
-                arguments: blogId);
+            Navigator.pushNamed(ContextUtilityService.context!, '/blog-view', arguments: blogId);
           }
         }
       });
@@ -78,8 +77,7 @@ class _MyAppState extends State<MyApp> {
     }
     try {
       // Get the initial link
-      final PendingDynamicLinkData? data =
-          await FirebaseDynamicLinks.instance.getInitialLink();
+      final PendingDynamicLinkData? data = await FirebaseDynamicLinks.instance.getInitialLink();
       // If the deep link is for the blog view then redirect it to the blog view page
       final Uri? deepLink = data?.link;
       if (deepLink != null) {
@@ -88,8 +86,7 @@ class _MyAppState extends State<MyApp> {
           final queryParams = deepLink.queryParameters;
           if (queryParams.containsKey('blogId')) {
             final blogId = queryParams['blogId'];
-            Navigator.pushNamed(ContextUtilityService.context!, '/blog-view',
-                arguments: blogId);
+            Navigator.pushNamed(ContextUtilityService.context!, '/blog-view', arguments: blogId);
             return;
           }
         }
@@ -118,7 +115,9 @@ class _MyAppState extends State<MyApp> {
         // Set the navigator key for the context utility service
         navigatorKey: ContextUtilityService.navigatorKey,
         // Set the route observer
-        navigatorObservers: [routeObserver],
+        navigatorObservers: [
+          routeObserver
+        ],
         initialRoute: '/',
         // All the registered routes in the app
         routes: {
@@ -171,8 +170,7 @@ class _MyAppState extends State<MyApp> {
             }
           },
           '/send-image': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments
-                as SendImageArguments;
+            final args = ModalRoute.of(context)!.settings.arguments as SendImageArguments;
             if (widget.authBloc.isAuthenticated()) {
               return SendImage(
                 authBloc: widget.authBloc,
@@ -185,8 +183,7 @@ class _MyAppState extends State<MyApp> {
             }
           },
           '/send-audio': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments
-                as SendAudioArguments;
+            final args = ModalRoute.of(context)!.settings.arguments as SendAudioArguments;
             return SendAudio(
               authBloc: widget.authBloc,
               audio: args.audio,
@@ -195,8 +192,7 @@ class _MyAppState extends State<MyApp> {
             );
           },
           '/send-document': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments
-                as SendDocumentArguments;
+            final args = ModalRoute.of(context)!.settings.arguments as SendDocumentArguments;
             return SendDocument(
               authBloc: widget.authBloc,
               document: args.document,
@@ -205,8 +201,7 @@ class _MyAppState extends State<MyApp> {
             );
           },
           '/send-video': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments
-                as SendVideoArguments;
+            final args = ModalRoute.of(context)!.settings.arguments as SendVideoArguments;
             return SendVideo(
               authBloc: widget.authBloc,
               document: args.video,
@@ -226,8 +221,7 @@ class _MyAppState extends State<MyApp> {
             }
           },
           '/chat': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments
-                as MessageNotificationArgs;
+            final args = ModalRoute.of(context)!.settings.arguments as MessageNotificationArgs;
             if (widget.authBloc.isAuthenticated()) {
               return ChatPage(
                 authBloc: args.authBloc,
@@ -238,10 +232,8 @@ class _MyAppState extends State<MyApp> {
               return SignInPage(authBloc: widget.authBloc);
             }
           },
-          '/back-up-call': (context) => const VideoCall(),
           '/call-accept-and-decline': (context) {
-            final args =
-                ModalRoute.of(context)!.settings.arguments as CallArguments;
+            final args = ModalRoute.of(context)!.settings.arguments as CallArguments;
             if (widget.authBloc.isAuthenticated()) {
               return CallScreen(
                 authBloc: widget.authBloc,
@@ -257,9 +249,25 @@ class _MyAppState extends State<MyApp> {
               return SignInPage(authBloc: widget.authBloc);
             }
           },
+          '/video-call-accept-and-decline': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as CallArguments;
+            if (widget.authBloc.isAuthenticated()) {
+              return VideoCallScreen(
+                authBloc: widget.authBloc,
+                avatar: args.avatar,
+                receiverName: args.receiverName,
+                roomId: args.roomId,
+                currentUserId: args.currentUserId,
+                receiverUserId: args.receiverUserId,
+                initialCallStatus: args.callStatus,
+                localStream: args.localStream,
+              );
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
           '/call': (context) {
-            final args =
-                ModalRoute.of(context)!.settings.arguments as CallArguments;
+            final args = ModalRoute.of(context)!.settings.arguments as CallArguments;
             if (widget.authBloc.isAuthenticated()) {
               return CallPage(
                 authBloc: widget.authBloc,
@@ -292,8 +300,7 @@ class _MyAppState extends State<MyApp> {
           '/manage-comments': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as String;
             if (widget.authBloc.isAuthenticated()) {
-              return ManageCommentsPage(
-                  authBloc: widget.authBloc, blogId: args);
+              return ManageCommentsPage(authBloc: widget.authBloc, blogId: args);
             } else {
               return SignInPage(authBloc: widget.authBloc);
             }

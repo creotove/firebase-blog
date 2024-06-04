@@ -8,4 +8,11 @@ class PermsHandler {
 
     return statuses[Permission.microphone]!.isGranted;
   }
+
+  Future<bool> camera() async {
+    final statuses = await [
+      Permission.camera,
+    ].request();
+    return statuses[Permission.camera]!.isGranted;
+  }
 }

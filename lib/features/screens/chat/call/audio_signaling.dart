@@ -32,7 +32,9 @@ class AudioSignaling {
 
   Future<MediaStream> openUserMedia() async {
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({'audio': true});
+      localStream = await navigator.mediaDevices.getUserMedia({
+        'audio': true
+      });
       return localStream!;
     } catch (e) {
       print(e.toString());
@@ -68,16 +70,16 @@ class AudioSignaling {
 
       if (roomId.isNotEmpty) {
         FirebaseFirestore db = FirebaseFirestore.instance;
+        Future<DocumentSnapshot<Map<String, dynamic>>> roomExists = db.collection('rooms').doc(roomId).get();
+        if (await roomExists == null) return;
         DocumentReference roomRef = db.collection('rooms').doc(roomId);
 
-        var calleeCandidates =
-            await roomRef.collection('calleeCandidates').get();
+        var calleeCandidates = await roomRef.collection('calleeCandidates').get();
         for (var candidate in calleeCandidates.docs) {
           await candidate.reference.delete();
         }
 
-        var callerCandidates =
-            await roomRef.collection('callerCandidates').get();
+        var callerCandidates = await roomRef.collection('callerCandidates').get();
         for (var candidate in callerCandidates.docs) {
           await candidate.reference.delete();
         }
@@ -103,7 +105,7 @@ class AudioSignaling {
       peerConnection = await createPeerConnection(_configuration);
       isConnectionClosed = false;
 
-      registerPeerConnectionListeners();
+      // registerPeerConnectionListeners();
 
       localStream?.getTracks().forEach((track) {
         peerConnection?.addTrack(track, localStream!);
@@ -162,10 +164,7 @@ class AudioSignaling {
         }
       });
 
-      calleeCandidatesSubscription = roomRef
-          .collection('calleeCandidates')
-          .snapshots()
-          .listen((snapshots) {
+      calleeCandidatesSubscription = roomRef.collection('calleeCandidates').snapshots().listen((snapshots) {
         for (var change in snapshots.docChanges) {
           if (change.type == DocumentChangeType.added) {
             if (change.doc.data() == null) return;
@@ -202,7 +201,7 @@ class AudioSignaling {
         peerConnection = await createPeerConnection(_configuration);
         isConnectionClosed = false;
 
-        registerPeerConnectionListeners();
+        // registerPeerConnectionListeners();
 
         // Ensure localStream is available
         if (localStream == null) {
@@ -237,7 +236,10 @@ class AudioSignaling {
         await peerConnection!.setLocalDescription(answer);
 
         await roomRef.update({
-          'answer': {'sdp': answer.sdp, 'type': answer.type},
+          'answer': {
+            'sdp': answer.sdp,
+            'type': answer.type
+          },
           'pickedUp': true,
         });
 
@@ -253,10 +255,7 @@ class AudioSignaling {
           }
         });
 
-        callerCandidatesSubscription = roomRef
-            .collection('callerCandidates')
-            .snapshots()
-            .listen((snapshots) {
+        callerCandidatesSubscription = roomRef.collection('callerCandidates').snapshots().listen((snapshots) {
           for (var change in snapshots.docChanges) {
             if (change.type == DocumentChangeType.added) {
               if (change.doc.data() == null) return;
@@ -282,58 +281,58 @@ class AudioSignaling {
     }
   }
 
-  void registerPeerConnectionListeners() {
-    peerConnection?.onIceGatheringState = (state) {
-      print('============Room ID1===============');
-      print(roomId); // Debug print
-      print('===========================');
-      print('ICE gathering state changed: $state');
-    };
+  // void registerPeerConnectionListeners() {
+  //   peerConnection?.onIceGatheringState = (state) {
+  //     print('============Room ID1===============');
+  //     print(roomId); // Debug print
+  //     print('===========================');
+  //     print('ICE gathering state changed: $state');
+  //   };
 
-    peerConnection?.onConnectionState = (state) {
-      print('============Room ID2===============');
-      print(roomId); // Debug print
-      print('===========================');
-      print('Connection state change: $state');
-    };
+  //   peerConnection?.onConnectionState = (state) {
+  //     print('============Room ID2===============');
+  //     print(roomId); // Debug print
+  //     print('===========================');
+  //     print('Connection state change: $state');
+  //   };
 
-    peerConnection?.onSignalingState = (state) {
-      print('============Room ID3===============');
-      print(roomId); // Debug print
-      print('===========================');
-      print('Signaling state change: $state');
-    };
+  //   peerConnection?.onSignalingState = (state) {
+  //     print('============Room ID3===============');
+  //     print(roomId); // Debug print
+  //     print('===========================');
+  //     print('Signaling state change: $state');
+  //   };
 
-    peerConnection?.onIceConnectionState = (state) {
-      print('============Room ID4===============');
-      print(roomId); // Debug print
-      print('===========================');
-      print('ICE connection state change: $state');
-    };
+  //   peerConnection?.onIceConnectionState = (state) {
+  //     print('============Room ID4===============');
+  //     print(roomId); // Debug print
+  //     print('===========================');
+  //     print('ICE connection state change: $state');
+  //   };
 
-    peerConnection?.onIceCandidate = (candidate) {
-      print('============Room ID5===============');
-      print(roomId); // Debug print
-      print('===========================');
-      print('ICE candidate: $candidate');
-    };
+  //   peerConnection?.onIceCandidate = (candidate) {
+  //     print('============Room ID5===============');
+  //     print(roomId); // Debug print
+  //     print('===========================');
+  //     print('ICE candidate: $candidate');
+  //   };
 
-    peerConnection?.onAddStream = (stream) {
-      print('============Room ID6===============');
-      print(roomId); // Debug print
-      print('===========================');
-      onAddRemoteStream?.call(stream);
-      remoteStream = stream;
-    };
+  //   peerConnection?.onAddStream = (stream) {
+  //     print('============Room ID6===============');
+  //     print(roomId); // Debug print
+  //     print('===========================');
+  //     onAddRemoteStream?.call(stream);
+  //     remoteStream = stream;
+  //   };
 
-    peerConnection?.onTrack = (event) {
-      print('============Room ID7===============');
-      print(roomId); // Debug print
-      print('===========================');
-      if (event.streams.isNotEmpty) {
-        remoteStream = event.streams[0];
-        onAddRemoteStream?.call(remoteStream!);
-      }
-    };
-  }
+  //   peerConnection?.onTrack = (event) {
+  //     print('============Room ID7===============');
+  //     print(roomId); // Debug print
+  //     print('===========================');
+  //     if (event.streams.isNotEmpty) {
+  //       remoteStream = event.streams[0];
+  //       onAddRemoteStream?.call(remoteStream!);
+  //     }
+  //   };
+  // }
 }

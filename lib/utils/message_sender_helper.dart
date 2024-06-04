@@ -14,21 +14,55 @@ import 'package:blog/secrets/fcm_server_key.dart';
 class MessageHelper {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> sendCallNotification(String receiverId, String roomId) async {
+  Future<void> sendVideoCallNotification(String receiverId, String roomId) async {
     try {
-      DocumentSnapshot userDoc = await _firestore
-          .collection('users')
-          .where('user_id', isEqualTo: receiverId)
-          .get()
-          .then((value) => value.docs.first);
+      DocumentSnapshot userDoc = await _firestore.collection('users').where('user_id', isEqualTo: receiverId).get().then((value) => value.docs.first);
       final userdata = userDoc.data();
       String receiverToken = (userdata as Map<String, dynamic>)['fcmToken'];
       final senderDetails = await AuthenticationBloc().getUserDetails();
       print(senderDetails['user_id']);
       final senderName = senderDetails['username'];
-      final senderAvatar = senderDetails.containsKey('avatar')
-          ? senderDetails['avatar']
-          : ConstantsHelper.defaultAavatar;
+      final senderAvatar = senderDetails.containsKey('avatar') ? senderDetails['avatar'] : ConstantsHelper.defaultAavatar;
+
+      if (receiverToken.isNotEmpty) {
+        await http.post(
+          Uri.parse('https://fcm.googleapis.com/fcm/send'),
+          headers: {
+            HttpHeaders.contentTypeHeader: 'application/json',
+            HttpHeaders.authorizationHeader: FcmSecrets.serverKey,
+          },
+          body: jsonEncode(
+            {
+              'to': receiverToken,
+              'notification': {
+                'title': "Video Call from $senderName",
+              },
+              'data': {
+                'route': '/video-call-accept-and-decline',
+                'roomId': roomId,
+                'senderUserId': senderDetails['user_id'],
+                'avatar': senderAvatar,
+                'receiverName': senderName,
+              },
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
+
+  Future<void> sendCallNotification(String receiverId, String roomId) async {
+    try {
+      DocumentSnapshot userDoc = await _firestore.collection('users').where('user_id', isEqualTo: receiverId).get().then((value) => value.docs.first);
+      final userdata = userDoc.data();
+      String receiverToken = (userdata as Map<String, dynamic>)['fcmToken'];
+      final senderDetails = await AuthenticationBloc().getUserDetails();
+      print(senderDetails['user_id']);
+      final senderName = senderDetails['username'];
+      final senderAvatar = senderDetails.containsKey('avatar') ? senderDetails['avatar'] : ConstantsHelper.defaultAavatar;
 
       if (receiverToken.isNotEmpty) {
         await http.post(
@@ -62,11 +96,7 @@ class MessageHelper {
 
   Future<void> _sendNotification(String receiverId, String message) async {
     try {
-      DocumentSnapshot userDoc = await _firestore
-          .collection('users')
-          .where('user_id', isEqualTo: receiverId)
-          .get()
-          .then((value) => value.docs.first);
+      DocumentSnapshot userDoc = await _firestore.collection('users').where('user_id', isEqualTo: receiverId).get().then((value) => value.docs.first);
       final userdata = userDoc.data();
       String receiverToken = (userdata as Map<String, dynamic>)['fcmToken'];
       final senderDetails = await AuthenticationBloc().getUserDetails();
@@ -115,7 +145,10 @@ class MessageHelper {
         isEncrypted: true,
       );
 
-      List<String> ids = [senderId, receiverId];
+      List<String> ids = [
+        senderId,
+        receiverId
+      ];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
       final senderDetails = await AuthenticationBloc().getUserDetailsById(
@@ -124,17 +157,16 @@ class MessageHelper {
       final receiverDetails = await AuthenticationBloc().getUserDetailsById(
         receiverId,
       );
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .collection('messages')
-          .add(newMsg.toMap());
+      await _firestore.collection('chatRooms').doc(chatRoomId).collection('messages').add(newMsg.toMap());
       await _firestore.collection('chatRooms').doc(chatRoomId).set({
         'lastMessage': encrptedMessage,
         'timestamp': Timestamp.now(),
         'unread': true,
         'type': 'text',
-        'users': [senderId, receiverId],
+        'users': [
+          senderId,
+          receiverId
+        ],
         'senderName': senderDetails['username'],
         'senderUserId': senderDetails['user_id'],
         'receiverName': receiverDetails['username'],
@@ -152,9 +184,7 @@ class MessageHelper {
     String receiverId,
   ) async {
     try {
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('chat_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
+      Reference ref = FirebaseStorage.instance.ref().child('chat_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
       UploadTask uploadTask = ref.putFile(image!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String imageUrl = await taskSnapshot.ref.getDownloadURL();
@@ -167,7 +197,10 @@ class MessageHelper {
         timestamp: Timestamp.now(),
       );
 
-      List<String> ids = [senderId, receiverId];
+      List<String> ids = [
+        senderId,
+        receiverId
+      ];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
       final senderDetails = await AuthenticationBloc().getUserDetailsById(
@@ -176,15 +209,14 @@ class MessageHelper {
       final receiverDetails = await AuthenticationBloc().getUserDetailsById(
         receiverId,
       );
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .collection('messages')
-          .add(newMsg.toMap());
+      await _firestore.collection('chatRooms').doc(chatRoomId).collection('messages').add(newMsg.toMap());
       await _firestore.collection('chatRooms').doc(chatRoomId).set({
         'lastMessage': imageUrl,
         'timestamp': Timestamp.now(),
-        'users': [senderId, receiverId],
+        'users': [
+          senderId,
+          receiverId
+        ],
         'unread': true,
         'type': "image",
         'senderName': senderDetails['username'],
@@ -205,9 +237,7 @@ class MessageHelper {
     String receiverId,
   ) async {
     try {
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('chat_audios/${DateTime.now().millisecondsSinceEpoch}.mp3');
+      Reference ref = FirebaseStorage.instance.ref().child('chat_audios/${DateTime.now().millisecondsSinceEpoch}.mp3');
       UploadTask uploadTask = ref.putFile(audio!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String audioUrl = await taskSnapshot.ref.getDownloadURL();
@@ -220,7 +250,10 @@ class MessageHelper {
         timestamp: Timestamp.now(),
       );
 
-      List<String> ids = [senderId, receiverId];
+      List<String> ids = [
+        senderId,
+        receiverId
+      ];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
       final senderDetails = await AuthenticationBloc().getUserDetailsById(
@@ -229,15 +262,14 @@ class MessageHelper {
       final receiverDetails = await AuthenticationBloc().getUserDetailsById(
         receiverId,
       );
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .collection('messages')
-          .add(newMsg.toMap());
+      await _firestore.collection('chatRooms').doc(chatRoomId).collection('messages').add(newMsg.toMap());
       await _firestore.collection('chatRooms').doc(chatRoomId).set({
         'lastMessage': audioUrl,
         'timestamp': Timestamp.now(),
-        'users': [senderId, receiverId],
+        'users': [
+          senderId,
+          receiverId
+        ],
         'unread': true,
         'type': 'audio',
         'senderName': senderDetails['username'],
@@ -258,9 +290,7 @@ class MessageHelper {
     String receiverId,
   ) async {
     try {
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('chat_videos/${DateTime.now().millisecondsSinceEpoch}.mp4');
+      Reference ref = FirebaseStorage.instance.ref().child('chat_videos/${DateTime.now().millisecondsSinceEpoch}.mp4');
       UploadTask uploadTask = ref.putFile(video!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String videoUrl = await taskSnapshot.ref.getDownloadURL();
@@ -273,7 +303,10 @@ class MessageHelper {
         timestamp: Timestamp.now(),
       );
 
-      List<String> ids = [senderId, receiverId];
+      List<String> ids = [
+        senderId,
+        receiverId
+      ];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
       final senderDetails = await AuthenticationBloc().getUserDetailsById(
@@ -282,15 +315,14 @@ class MessageHelper {
       final receiverDetails = await AuthenticationBloc().getUserDetailsById(
         receiverId,
       );
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .collection('messages')
-          .add(newMsg.toMap());
+      await _firestore.collection('chatRooms').doc(chatRoomId).collection('messages').add(newMsg.toMap());
       await _firestore.collection('chatRooms').doc(chatRoomId).set({
         'lastMessage': videoUrl,
         'timestamp': Timestamp.now(),
-        'users': [senderId, receiverId],
+        'users': [
+          senderId,
+          receiverId
+        ],
         'unread': true,
         'type': 'video',
         'senderName': senderDetails['username'],
@@ -311,9 +343,7 @@ class MessageHelper {
     String receiverId,
   ) async {
     try {
-      Reference ref = FirebaseStorage.instance
-          .ref()
-          .child('chat_documents/${DateTime.now().millisecondsSinceEpoch}.pdf');
+      Reference ref = FirebaseStorage.instance.ref().child('chat_documents/${DateTime.now().millisecondsSinceEpoch}.pdf');
       UploadTask uploadTask = ref.putFile(document!);
       TaskSnapshot taskSnapshot = await uploadTask.whenComplete(() => null);
       String documentUrl = await taskSnapshot.ref.getDownloadURL();
@@ -326,7 +356,10 @@ class MessageHelper {
         timestamp: Timestamp.now(),
       );
 
-      List<String> ids = [senderId, receiverId];
+      List<String> ids = [
+        senderId,
+        receiverId
+      ];
       ids.sort();
       String chatRoomId = '${ids[0]}_${ids[1]}';
       final senderDetails = await AuthenticationBloc().getUserDetailsById(
@@ -335,15 +368,14 @@ class MessageHelper {
       final receiverDetails = await AuthenticationBloc().getUserDetailsById(
         receiverId,
       );
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .collection('messages')
-          .add(newMsg.toMap());
+      await _firestore.collection('chatRooms').doc(chatRoomId).collection('messages').add(newMsg.toMap());
       await _firestore.collection('chatRooms').doc(chatRoomId).set({
         'lastMessage': documentUrl,
         'timestamp': Timestamp.now(),
-        'users': [senderId, receiverId],
+        'users': [
+          senderId,
+          receiverId
+        ],
         'unread': true,
         'type': 'document',
         'senderName': senderDetails['username'],

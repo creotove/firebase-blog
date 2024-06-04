@@ -2,6 +2,7 @@
 
 import 'package:blog/constants.dart';
 import 'package:blog/features/screens/chat/call/audio_signaling.dart';
+import 'package:blog/features/screens/chat/videoCall/video_call_signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/chat_service.dart';
 import 'package:blog/utils/encryption_helper.dart';
@@ -35,12 +36,12 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ChatService _chatService = ChatService();
-  final ValueNotifier<Set<String>> _selectedMessages =
-      ValueNotifier<Set<String>>({});
+  final ValueNotifier<Set<String>> _selectedMessages = ValueNotifier<Set<String>>({});
   bool _selectionMode = false;
   late String receiverAvatar;
   late String receiverUserName;
-  AudioSignaling signaling = AudioSignaling();
+  AudioSignaling audioSignaling = AudioSignaling();
+  VideoSignaling videoSignaling = VideoSignaling();
 
   void _onMessageLongPress(
     String messageId,
@@ -93,14 +94,13 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     final currentUserId = widget.currentUserId;
-    final List users = [widget.currentUserId, widget.receiverUserId];
+    final List users = [
+      widget.currentUserId,
+      widget.receiverUserId
+    ];
     users.sort();
     // Update the message with the new likedBy list
-    final messageRef = FirebaseFirestore.instance
-        .collection('chatRooms')
-        .doc(users[0] + '_' + users[1])
-        .collection('messages')
-        .doc(messageId);
+    final messageRef = FirebaseFirestore.instance.collection('chatRooms').doc(users[0] + '_' + users[1]).collection('messages').doc(messageId);
     final messageDoc = await messageRef.get();
     if (messageDoc.exists) {
       List<dynamic> likedBy = messageDoc['likedBy'] ?? [];
@@ -109,7 +109,9 @@ class _ChatPageState extends State<ChatPage> {
       } else {
         likedBy.add(currentUserId);
       }
-      await messageRef.update({'likedBy': likedBy});
+      await messageRef.update({
+        'likedBy': likedBy
+      });
     }
   }
 
@@ -125,8 +127,7 @@ class _ChatPageState extends State<ChatPage> {
 
   // Getting the receiver user details for displaying their name and avatar
   Future<Map<String, dynamic>> fetchReceiverDetails() async {
-    final userDetails =
-        await widget.authBloc.getUserDetailsById(widget.receiverUserId);
+    final userDetails = await widget.authBloc.getUserDetailsById(widget.receiverUserId);
     return userDetails;
   }
 
@@ -155,8 +156,7 @@ class _ChatPageState extends State<ChatPage> {
             } else {
               final receiverDetails = snapshot.data!;
               final receiverName = receiverDetails['username'];
-              receiverAvatar =
-                  receiverDetails['avatar'] ?? ConstantsHelper.defaultAavatar;
+              receiverAvatar = receiverDetails['avatar'] ?? ConstantsHelper.defaultAavatar;
               receiverUserName = receiverDetails['username'];
               return GestureDetector(
                 onTap: () {
@@ -169,8 +169,7 @@ class _ChatPageState extends State<ChatPage> {
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundImage: NetworkImage(receiverDetails['avatar'] ??
-                          ConstantsHelper.defaultAavatar),
+                      backgroundImage: NetworkImage(receiverDetails['avatar'] ?? ConstantsHelper.defaultAavatar),
                     ),
                     const SizedBox(width: 8.0),
                     Text(receiverName),
@@ -185,45 +184,88 @@ class _ChatPageState extends State<ChatPage> {
             valueListenable: _selectedMessages,
             builder: (context, selectedMessages, child) {
               if (selectedMessages.isEmpty) {
-                return IconButton(
-                  icon: const Icon(Icons.call),
-                  onPressed: () async {
-                    try {
-                      final localStream = await signaling.openUserMedia();
-                      if (await PermsHandler().microphone()) {
-                        final roomId = await signaling.createRoom();
-                        print("created a room");
-                        final arguments = CallArguments(
-                          authBloc: widget.authBloc,
-                          avatar: receiverAvatar,
-                          receiverName: receiverUserName,
-                          roomId: roomId,
-                          currentUserId: widget.currentUserId,
-                          callStatus: DuringCallStatus.calling,
-                          receiverUserId: widget.receiverUserId,
-                          localStream: localStream,
-                        );
-                        await MessageHelper().sendCallNotification(
-                            widget.receiverUserId, roomId);
-                        print("Sent noti redirecting to the call page");
-                        if (roomId.isNotEmpty) {
-                          await Navigator.pushNamed(
-                            context,
-                            '/call-accept-and-decline',
-                            arguments: arguments,
-                          );
+                return Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.videocam),
+                      onPressed: () async {
+                        try {
+                          final localStream = await videoSignaling.openUserMedia();
+                          if (await PermsHandler().microphone() && await PermsHandler().camera()) {
+                            final roomId = await videoSignaling.createRoom();
+                            print('==========================');
+                            print("created a room");
+                            print('==========================');
+                            await MessageHelper().sendVideoCallNotification(widget.receiverUserId, roomId);
+                            final arguments = CallArguments(
+                              authBloc: widget.authBloc,
+                              avatar: receiverAvatar,
+                              receiverName: receiverUserName,
+                              roomId: roomId,
+                              currentUserId: widget.currentUserId,
+                              callStatus: DuringCallStatus.calling,
+                              receiverUserId: widget.receiverUserId,
+                              localStream: localStream,
+                            );
+                            if (roomId.isNotEmpty) {
+                              await Navigator.pushNamed(
+                                context,
+                                '/video-call-accept-and-decline',
+                                arguments: arguments,
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Permission denied'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          print(e);
                         }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Permission denied'),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      print(e);
-                    }
-                  },
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.call),
+                      onPressed: () async {
+                        try {
+                          final localStream = await audioSignaling.openUserMedia();
+                          if (await PermsHandler().microphone()) {
+                            final roomId = await audioSignaling.createRoom();
+                            print("created a room");
+                            final arguments = CallArguments(
+                              authBloc: widget.authBloc,
+                              avatar: receiverAvatar,
+                              receiverName: receiverUserName,
+                              roomId: roomId,
+                              currentUserId: widget.currentUserId,
+                              callStatus: DuringCallStatus.calling,
+                              receiverUserId: widget.receiverUserId,
+                              localStream: localStream,
+                            );
+                            await MessageHelper().sendCallNotification(widget.receiverUserId, roomId);
+                            print("Sent noti redirecting to the call page");
+                            if (roomId.isNotEmpty) {
+                              await Navigator.pushNamed(
+                                context,
+                                '/call-accept-and-decline',
+                                arguments: arguments,
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Permission denied'),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          print(e);
+                        }
+                      },
+                    ),
+                  ],
                 );
               }
               return Row(
@@ -241,10 +283,7 @@ class _ChatPageState extends State<ChatPage> {
                       color: Colors.red,
                     ),
                     onPressed: () async {
-                      final deleted = await _chatService.deleteSelectedMessages(
-                          widget.currentUserId,
-                          widget.receiverUserId,
-                          selectedMessages);
+                      final deleted = await _chatService.deleteSelectedMessages(widget.currentUserId, widget.receiverUserId, selectedMessages);
                       if (deleted) {
                         _selectionMode = false;
                         _selectedMessages.value = {};
@@ -371,8 +410,7 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildMessagesList() {
     return StreamBuilder<QuerySnapshot>(
-      stream:
-          _chatService.getMessages(widget.currentUserId, widget.receiverUserId),
+      stream: _chatService.getMessages(widget.currentUserId, widget.receiverUserId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -402,14 +440,11 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildMessageItem(
-      DocumentSnapshot document, Set<String> selectedMessages) {
+  Widget _buildMessageItem(DocumentSnapshot document, Set<String> selectedMessages) {
     Map<String, dynamic> message = document.data() as Map<String, dynamic>;
     final messageId = document.id;
     final isMe = message['senderId'] == widget.currentUserId;
-    final decryptedMessage = message['isEncrypted']
-        ? EncryptionHelper.decryptMessage(message['message'])
-        : message['message'];
+    final decryptedMessage = message['isEncrypted'] ? EncryptionHelper.decryptMessage(message['message']) : message['message'];
     final messageType = message['type'];
     final likesCount = message['likedBy']?.length ?? 0;
     final isMessageSelected = selectedMessages.contains(messageId);
@@ -417,8 +452,7 @@ class _ChatPageState extends State<ChatPage> {
     return GestureDetector(
       onTap: () async {
         if (_selectionMode) {
-          _onMessageLongPress(document.id, message['isDeletedByReceiver'],
-              message['isDeletedBySender'], isMe);
+          _onMessageLongPress(document.id, message['isDeletedByReceiver'], message['isDeletedBySender'], isMe);
         } else if (messageType == "image") {
           Navigator.pushNamed(
             context,
@@ -446,8 +480,7 @@ class _ChatPageState extends State<ChatPage> {
         }
       },
       onDoubleTap: () async {
-        await toggleLike(document.id, message['isDeletedByReceiver'],
-            message['isDeletedBySender'], isMe);
+        await toggleLike(document.id, message['isDeletedByReceiver'], message['isDeletedBySender'], isMe);
       },
       onLongPress: () {
         _onMessageLongPress(
@@ -471,8 +504,7 @@ class _ChatPageState extends State<ChatPage> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
-              crossAxisAlignment:
-                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 BuildMessageContent(
                   isMe: isMe,

@@ -5,11 +5,14 @@ import 'dart:convert';
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
 import 'package:blog/features/screens/chat/call/audio_signaling.dart';
+import 'package:blog/features/screens/chat/videoCall/video_call_signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/context_utility_service.dart';
+import 'package:blog/utils/perms_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 // import 'package:permission_handler/permission_handler.dart';
 
 class FirebaseApi {
@@ -48,11 +51,7 @@ class FirebaseApi {
     try {
       // Store the token in the Firestore for the user
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
-      await firestore
-          .collection('users')
-          .where('user_id', isEqualTo: userDetails['user_id'])
-          .get()
-          .then((value) async {
+      await firestore.collection('users').where('user_id', isEqualTo: userDetails['user_id']).get().then((value) async {
         if (value.docs.isNotEmpty) {
           await firestore.collection('users').doc(value.docs.first.id).update({
             'fcmToken': token,
@@ -83,14 +82,14 @@ class FirebaseApi {
             route: route,
             authBloc: AuthenticationBloc(),
           );
-          ContextUtilityService.navigatorKey.currentState
-              ?.pushNamed(route, arguments: myArgs);
+          ContextUtilityService.navigatorKey.currentState?.pushNamed(route, arguments: myArgs);
         } else if (route == '/call-accept-and-decline') {
           final roomId = message.data['roomId'];
           final avatar = message.data['avatar'];
           final receiverName = message.data['receiverName'];
           final localStream = await AudioSignaling().openUserMedia();
-          final callArgs = CallArguments(
+          if (await PermsHandler().microphone()) {
+            final callArgs = CallArguments(
               authBloc: AuthenticationBloc(),
               avatar: avatar,
               receiverName: receiverName,
@@ -98,9 +97,29 @@ class FirebaseApi {
               currentUserId: receiverUserId.toString(),
               callStatus: DuringCallStatus.ringing,
               receiverUserId: senderUserId,
-              localStream: localStream);
-          await ContextUtilityService.navigatorKey.currentState
-              ?.pushNamed(route, arguments: callArgs);
+              localStream: localStream,
+            );
+            await ContextUtilityService.navigatorKey.currentState?.pushNamed(route, arguments: callArgs);
+          }
+        } else if (route == '/video-call-accept-and-decline') {
+          final roomId = message.data['roomId'];
+          final avatar = message.data['avatar'];
+          final receiverName = message.data['receiverName'];
+          final remoteStream = await VideoSignaling().openUserMedia();
+          if (await PermsHandler().microphone() && await PermsHandler().camera()) {
+            final callArgs = CallArguments(
+              authBloc: AuthenticationBloc(),
+              avatar: avatar,
+              receiverName: receiverName,
+              roomId: roomId,
+              currentUserId: receiverUserId.toString(),
+              callStatus: DuringCallStatus.ringing,
+              receiverUserId: senderUserId,
+              remoteStream: remoteStream,
+            );
+            print('Call Args: $callArgs');
+            await ContextUtilityService.navigatorKey.currentState?.pushNamed(route, arguments: callArgs);
+          }
         }
       }
     } catch (e) {
@@ -111,8 +130,7 @@ class FirebaseApi {
   Future initLocalPushNotifications() async {
     const android = AndroidInitializationSettings('@drawable/ic_launcher');
     const iOS = DarwinInitializationSettings();
-    const initializationSettings =
-        InitializationSettings(android: android, iOS: iOS);
+    const initializationSettings = InitializationSettings(android: android, iOS: iOS);
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (details) {
@@ -120,9 +138,7 @@ class FirebaseApi {
         handleMessage(message);
       },
     );
-    final platform =
-        _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()!;
+    final platform = _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()!;
     await platform.createNotificationChannel(_androidChannel);
   }
 
