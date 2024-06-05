@@ -1,5 +1,6 @@
-import 'dart:async';
+// ignore_for_file: library_private_types_in_public_api, deprecated_member_use, use_build_context_synchronously, avoid_print, use_rethrow_when_possible
 
+import 'dart:async';
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
 import 'package:blog/features/screens/blog/home_page.dart';
@@ -19,7 +20,7 @@ class VideoCallScreen extends StatefulWidget {
   final String currentUserId;
   final String receiverUserId;
   final MediaStream? localStream;
-  final MediaStream? remoteStream;
+  // final MediaStream? remoteStream;
 
   final RTCVideoRenderer localRenderer = RTCVideoRenderer();
   final RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
@@ -34,7 +35,7 @@ class VideoCallScreen extends StatefulWidget {
     required this.receiverUserId,
     required this.authBloc,
     this.localStream,
-    this.remoteStream,
+    // this.remoteStream,
   });
 
   @override
@@ -75,7 +76,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         if (data['pickedUp'] == true) {
           _callStatus = DuringCallStatus.accepted;
           widget.localRenderer.srcObject = widget.localStream;
-          widget.remoteRenderer.srcObject = widget.remoteStream;
+          // widget.remoteRenderer.srcObject = widget.remoteStream;
           setState(() {});
         }
       });
@@ -117,7 +118,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     await _signaling.hangUp(
       widget.roomId,
       widget.localStream!,
-      widget.remoteStream,
+      // widget.remoteStream,
     );
     _stopRinging();
     await Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context) {
@@ -158,7 +159,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     await _signaling.hangUp(
       widget.roomId,
       widget.localStream!,
-      widget.remoteStream,
+      // widget.remoteStream,
     );
     setState(() {
       _callStatus = DuringCallStatus.declined;
@@ -181,7 +182,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         });
         _signaling.onAddRemoteStream = (stream) {
           widget.localRenderer.srcObject = widget.localStream;
-          widget.remoteRenderer.srcObject = widget.remoteStream;
+          // widget.remoteRenderer.srcObject = widget.remoteStream;
         };
         setState(() {});
       });

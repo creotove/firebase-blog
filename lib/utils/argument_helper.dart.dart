@@ -89,3 +89,23 @@ class CallArguments {
     this.remoteStream,
   });
 }
+
+class NewCallArguments {
+  final AuthenticationBloc authBloc;
+  final DuringCallStatus initialCallStatus;
+  final String avatar;
+  final String receiverName;
+  final String roomId;
+  final String currentUserId;
+  final String receiverUserId;
+
+  NewCallArguments({
+    required this.authBloc,
+    required this.initialCallStatus,
+    required this.avatar,
+    required this.receiverName,
+    required this.roomId,
+    required this.currentUserId,
+    required this.receiverUserId,
+  });
+}

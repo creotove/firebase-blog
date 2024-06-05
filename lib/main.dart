@@ -15,6 +15,7 @@ import 'package:blog/features/screens/chat/chats.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendAudio.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendDocument.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendImage.dart';
+import 'package:blog/features/screens/chat/videoCall/new_video_call.dart';
 import 'package:blog/features/screens/chat/videoCall/video_call_accept_decline.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/features/screens/chat/sendScreens/sendVideo.dart';
@@ -250,17 +251,38 @@ class _MyAppState extends State<MyApp> {
             }
           },
           '/video-call-accept-and-decline': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments as CallArguments;
+            final args = ModalRoute.of(context)!.settings.arguments as NewCallArguments;
             if (widget.authBloc.isAuthenticated()) {
+              print('==================== args ====================');
+              print(args.initialCallStatus);
+              print('==================== args ====================');
               return VideoCallScreen(
+                authBloc: widget.authBloc,
+                initialCallStatus: args.initialCallStatus,
+                avatar: args.avatar,
+                receiverName: args.receiverName,
+                roomId: args.roomId,
+                currentUserId: args.currentUserId,
+                receiverUserId: args.receiverUserId,
+              );
+            } else {
+              return SignInPage(authBloc: widget.authBloc);
+            }
+          },
+          '/new-video-call-accept-and-decline': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as NewCallArguments;
+            print('==================== args ====================');
+            print(args.initialCallStatus);
+            print('==================== args ====================');
+            if (widget.authBloc.isAuthenticated()) {
+              return NewVideoCallScreen(
                 authBloc: widget.authBloc,
                 avatar: args.avatar,
                 receiverName: args.receiverName,
                 roomId: args.roomId,
                 currentUserId: args.currentUserId,
                 receiverUserId: args.receiverUserId,
-                initialCallStatus: args.callStatus,
-                localStream: args.localStream,
+                initialCallStatus: args.initialCallStatus,
               );
             } else {
               return SignInPage(authBloc: widget.authBloc);

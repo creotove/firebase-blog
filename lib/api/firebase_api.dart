@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:blog/authentication.dart';
 import 'package:blog/constants.dart';
 import 'package:blog/features/screens/chat/call/audio_signaling.dart';
+import 'package:blog/features/screens/chat/videoCall/new_video_signaling.dart';
 import 'package:blog/features/screens/chat/videoCall/video_call_signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/context_utility_service.dart';
@@ -67,15 +68,17 @@ class FirebaseApi {
     try {
       print('Message handled in the foreground!');
       if (message.data.isEmpty) {
+        print('==================== Empty ====================');
         print('No data in message');
+        print('==================== Empty ====================');
         return;
       }
       final route = message.data['route'];
       final receiverUserId = await AuthenticationBloc().getCurrentUserId();
       final senderUserId = message.data['senderUserId'];
-
       if (receiverUserId != null) {
         if (route == '/chat') {
+          print('==================== Chat ====================');
           final myArgs = MessageNotificationArgs(
             receiverUserId: senderUserId,
             senderUserId: receiverUserId.toString(),
@@ -84,6 +87,7 @@ class FirebaseApi {
           );
           ContextUtilityService.navigatorKey.currentState?.pushNamed(route, arguments: myArgs);
         } else if (route == '/call-accept-and-decline') {
+          print('==================== Call ====================');
           final roomId = message.data['roomId'];
           final avatar = message.data['avatar'];
           final receiverName = message.data['receiverName'];
@@ -101,29 +105,33 @@ class FirebaseApi {
             );
             await ContextUtilityService.navigatorKey.currentState?.pushNamed(route, arguments: callArgs);
           }
-        } else if (route == '/video-call-accept-and-decline') {
+        } else if (route == '/new-video-call-accept-and-decline') {
           final roomId = message.data['roomId'];
           final avatar = message.data['avatar'];
           final receiverName = message.data['receiverName'];
-          final remoteStream = await VideoSignaling().openUserMedia();
+
           if (await PermsHandler().microphone() && await PermsHandler().camera()) {
-            final callArgs = CallArguments(
+            final newCallArgs = NewCallArguments(
               authBloc: AuthenticationBloc(),
+              initialCallStatus: DuringCallStatus.ringing,
               avatar: avatar,
               receiverName: receiverName,
               roomId: roomId,
               currentUserId: receiverUserId.toString(),
-              callStatus: DuringCallStatus.ringing,
               receiverUserId: senderUserId,
-              remoteStream: remoteStream,
             );
-            print('Call Args: $callArgs');
-            await ContextUtilityService.navigatorKey.currentState?.pushNamed(route, arguments: callArgs);
+            await ContextUtilityService.navigatorKey.currentState?.pushNamed(route, arguments: newCallArgs);
+          } else {
+            print('================Permission denied=================');
+            print('Permission denied');
+            print('================Permission denied=================');
           }
         }
       }
     } catch (e) {
+      print('=======================================Error=======================================');
       print(e);
+      print('=======================================Error=======================================');
     }
   }
 

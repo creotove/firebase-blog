@@ -2,6 +2,8 @@
 
 import 'package:blog/constants.dart';
 import 'package:blog/features/screens/chat/call/audio_signaling.dart';
+import 'package:blog/features/screens/chat/videoCall/new_video_call.dart';
+import 'package:blog/features/screens/chat/videoCall/new_video_signaling.dart';
 import 'package:blog/features/screens/chat/videoCall/video_call_signaling.dart';
 import 'package:blog/utils/argument_helper.dart.dart';
 import 'package:blog/utils/chat_service.dart';
@@ -42,6 +44,25 @@ class _ChatPageState extends State<ChatPage> {
   late String receiverUserName;
   AudioSignaling audioSignaling = AudioSignaling();
   VideoSignaling videoSignaling = VideoSignaling();
+
+  Future<String> startVideoCall() async {
+    try {
+      print("Starting video call");
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+      DocumentReference roomRef = await firestore.collection('rooms').add({
+        'callerId': widget.currentUserId,
+        'receiverId': widget.receiverUserId,
+        'pickedUp': false,
+        'hungUp': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return roomRef.id;
+    } catch (e) {
+      print(e);
+      throw e;
+    }
+  }
 
   void _onMessageLongPress(
     String messageId,
@@ -190,28 +211,23 @@ class _ChatPageState extends State<ChatPage> {
                       icon: const Icon(Icons.videocam),
                       onPressed: () async {
                         try {
-                          final localStream = await videoSignaling.openUserMedia();
+                          final roomId = await startVideoCall();
                           if (await PermsHandler().microphone() && await PermsHandler().camera()) {
-                            final roomId = await videoSignaling.createRoom();
-                            print('==========================');
-                            print("created a room");
-                            print('==========================');
-                            await MessageHelper().sendVideoCallNotification(widget.receiverUserId, roomId);
-                            final arguments = CallArguments(
+                            final newArguments = NewCallArguments(
                               authBloc: widget.authBloc,
+                              initialCallStatus: DuringCallStatus.calling,
                               avatar: receiverAvatar,
                               receiverName: receiverUserName,
                               roomId: roomId,
                               currentUserId: widget.currentUserId,
-                              callStatus: DuringCallStatus.calling,
                               receiverUserId: widget.receiverUserId,
-                              localStream: localStream,
                             );
                             if (roomId.isNotEmpty) {
+                              await MessageHelper().sendVideoCallNotification(widget.receiverUserId, roomId);
                               await Navigator.pushNamed(
                                 context,
-                                '/video-call-accept-and-decline',
-                                arguments: arguments,
+                                '/new-video-call-accept-and-decline',
+                                arguments: newArguments,
                               );
                             }
                           } else {
@@ -233,7 +249,6 @@ class _ChatPageState extends State<ChatPage> {
                           final localStream = await audioSignaling.openUserMedia();
                           if (await PermsHandler().microphone()) {
                             final roomId = await audioSignaling.createRoom();
-                            print("created a room");
                             final arguments = CallArguments(
                               authBloc: widget.authBloc,
                               avatar: receiverAvatar,
@@ -244,9 +259,9 @@ class _ChatPageState extends State<ChatPage> {
                               receiverUserId: widget.receiverUserId,
                               localStream: localStream,
                             );
-                            await MessageHelper().sendCallNotification(widget.receiverUserId, roomId);
                             print("Sent noti redirecting to the call page");
                             if (roomId.isNotEmpty) {
+                              await MessageHelper().sendCallNotification(widget.receiverUserId, roomId);
                               await Navigator.pushNamed(
                                 context,
                                 '/call-accept-and-decline',

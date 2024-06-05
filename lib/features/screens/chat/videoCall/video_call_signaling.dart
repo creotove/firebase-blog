@@ -411,7 +411,7 @@ class VideoSignaling {
   Future<void> hangUp(
     String roomId,
     MediaStream localStream,
-    MediaStream? remoteStream,
+    // MediaStream? remoteStream,
   ) async {
     try {
       isConnectionClosed = true;
@@ -490,7 +490,11 @@ class VideoSignaling {
         if (snapshot.data() == null) return;
         var data = snapshot.data() as Map<String, dynamic>;
         if (data['hangup'] == true) {
-          await hangUp(roomRef.id, localStream!, remoteStream);
+          await hangUp(
+            roomRef.id,
+            localStream!,
+            // remoteStream,
+          );
         }
       });
 
@@ -601,13 +605,21 @@ class VideoSignaling {
           if (snapshot.data() == null) return;
           var data = snapshot.data() as Map<String, dynamic>;
           if (data['hangup'] == true) {
-            await hangUp(roomRef.id, localStream!, remoteStream);
+            await hangUp(
+              roomRef.id,
+              localStream!,
+              // remoteStream,
+            );
           }
         });
 
         peerConnection?.onIceConnectionState = (RTCIceConnectionState state) {
           if (state == RTCIceConnectionState.RTCIceConnectionStateFailed) {
-            hangUp(roomId, localStream!, remoteStream);
+            hangUp(
+              roomId,
+              localStream!,
+              // remoteStream,
+            );
           }
         };
 

@@ -38,7 +38,7 @@ class MessageHelper {
                 'title': "Video Call from $senderName",
               },
               'data': {
-                'route': '/video-call-accept-and-decline',
+                'route': '/new-video-call-accept-and-decline',
                 'roomId': roomId,
                 'senderUserId': senderDetails['user_id'],
                 'avatar': senderAvatar,
